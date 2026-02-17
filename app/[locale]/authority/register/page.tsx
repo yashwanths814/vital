@@ -14,7 +14,8 @@ import {
     addDoc,
     setDoc,
     doc,
-    serverTimestamp
+    serverTimestamp,
+    getDoc
 } from "firebase/firestore";
 import { Eye, EyeOff, MapPin, Building2, User, Shield, Mail, Phone, FileText, Home, LogIn } from "lucide-react";
 import { FiAlertCircle } from "react-icons/fi";
@@ -115,6 +116,10 @@ export default function AuthorityRegisterPage() {
                 emailCheck: "Checking email availability...",
                 emailAvailable: "Email is available",
                 alreadyRegistered: "Already registered? Please login here",
+                registrationSuccess: "Registration Successful!",
+                redirecting: "Redirecting to verification status...",
+                emailTaken: "Email Already Registered",
+                checking: "Checking Email...",
             },
             kn: {
                 title: "ಅಧಿಕಾರಿ ನೋಂದಣಿ",
@@ -155,6 +160,10 @@ export default function AuthorityRegisterPage() {
                 emailCheck: "ಇಮೇಲ್ ಲಭ್ಯತೆಯನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
                 emailAvailable: "ಇಮೇಲ್ ಲಭ್ಯವಿದೆ",
                 alreadyRegistered: "ಈಗಾಗಲೇ ನೋಂದಾಯಿಸಲಾಗಿದೆಯೇ? ದಯವಿಟ್ಟು ಇಲ್ಲಿ ಲಾಗಿನ್ ಮಾಡಿ",
+                registrationSuccess: "ನೋಂದಣಿ ಯಶಸ್ವಿಯಾಗಿದೆ!",
+                redirecting: "ಪರಿಶೀಲನೆ ಸ್ಥಿತಿಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತಿದೆ...",
+                emailTaken: "ಇಮೇಲ್ ಈಗಾಗಲೇ ನೋಂದಾಯಿಸಲಾಗಿದೆ",
+                checking: "ಇಮೇಲ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
             },
             hi: {
                 title: "प्राधिकारी पंजीकरण",
@@ -195,6 +204,10 @@ export default function AuthorityRegisterPage() {
                 emailCheck: "ईमेल उपलब्धता की जाँच की जा रही है...",
                 emailAvailable: "ईमेल उपलब्ध है",
                 alreadyRegistered: "पहले से पंजीकृत हैं? कृपया यहां लॉगिन करें",
+                registrationSuccess: "पंजीकरण सफल!",
+                redirecting: "सत्यापन स्थिति पर पुनर्निर्देशित किया जा रहा है...",
+                emailTaken: "ईमेल पहले से पंजीकृत है",
+                checking: "ईमेल की जाँच की जा रही है...",
             },
         };
         return L[locale] || L.en;
@@ -878,6 +891,7 @@ export default function AuthorityRegisterPage() {
                 try {
                     await signOut(auth);
                 } catch { }
+                // Redirect to status page for unverified users
                 router.replace(`/${locale}/authority/status`);
             }, 2000);
 
@@ -1219,10 +1233,10 @@ export default function AuthorityRegisterPage() {
                                 </div>
                                 <div>
                                     <span className="text-sm font-semibold leading-snug block">
-                                        Registration Successful!
+                                        {t.registrationSuccess}
                                     </span>
                                     <span className="text-xs mt-1 block">
-                                        Your account has been created. Redirecting to verification status...
+                                        {t.redirecting}
                                     </span>
                                 </div>
                             </div>
@@ -1795,17 +1809,17 @@ export default function AuthorityRegisterPage() {
                                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
-                                        <span>Registration Complete!</span>
+                                        <span>{t.registrationSuccess}</span>
                                     </>
                                 ) : emailStatus === "taken" ? (
                                     <>
                                         <FiAlertCircle className="w-5 h-5" />
-                                        <span>Email Already Registered</span>
+                                        <span>{t.emailTaken}</span>
                                     </>
                                 ) : checkingEmail ? (
                                     <>
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>Checking Email...</span>
+                                        <span>{t.checking}</span>
                                     </>
                                 ) : (
                                     <>
