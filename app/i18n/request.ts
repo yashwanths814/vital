@@ -11,9 +11,7 @@ type Locale = keyof typeof loaders;
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const locale = (await requestLocale) as Locale | undefined;
-
-  const safeLocale: Locale =
-    locale && locale in loaders ? locale : "en";
+  const safeLocale: Locale = locale && locale in loaders ? locale : "en";
 
   return {
     locale: safeLocale,
