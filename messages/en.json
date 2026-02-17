@@ -1,0 +1,731 @@
+{
+    "pdoIssueDetails": {
+        "title": "Issue Details",
+        "subtitle": "Track, assign worker, and raise fund request if needed.",
+        "loading": "Loading…",
+        "actions": {
+            "back": "Back"
+        },
+        "fields": {
+            "issueId": "Issue ID",
+            "title": "Title",
+            "category": "Category",
+            "status": "Status",
+            "slaDeadline": "SLA Deadline"
+        },
+        "assignedWorker": {
+            "title": "Assigned Worker",
+            "notAssigned": "Not assigned yet."
+        },
+        "assign": {
+            "title": "Assign Worker",
+            "waiting": "Waiting for VI verification",
+            "selectWorker": "Select Worker",
+            "choose": "-- Choose --",
+            "noWorkers": "No workers found for this Panchayat.",
+            "note": "PDO Note (optional)",
+            "notePlaceholder": "Example: Complete within 3 days. Priority high.",
+            "assignBtn": "Assign Worker",
+            "assigning": "Assigning...",
+            "raiseFund": "Raise Fund Request"
+        },
+        "errors": {
+            "profileMissing": "Authority profile missing.",
+            "panchayatMissing": "panchayatId missing in PDO profile.",
+            "issueNotFound": "Issue not found.",
+            "notAllowed": "You are not allowed to view this issue.",
+            "genericLoadFail": "Failed to load issue.",
+            "selectWorker": "Select a worker.",
+            "workerNotFound": "Worker not found.",
+            "assignFail": "Failed to assign worker."
+        }
+    },
+    "fundApprove": {
+        "title": "Fund Approval",
+        "subtitle": "Approve or reject the PDO fund request",
+        "back": "Back",
+        "requestId": "Request ID",
+        "amount": "Amount",
+        "reason": "Reason",
+        "scope": "Scope",
+        "comment": "TDO Comment (optional)",
+        "commentPh": "Write your comment (why approved/rejected)...",
+        "approve": "Approve",
+        "reject": "Reject",
+        "approving": "Approving...",
+        "rejecting": "Rejecting...",
+        "alreadyDecided": "This request is already decided.",
+        "status_pending": "Pending",
+        "status_approved": "Approved",
+        "status_rejected": "Rejected",
+        "notFound": "Fund request not found.",
+        "missingScope": "This request is missing district/taluk fields.",
+        "notAllowed": "You are not allowed to view this request.",
+        "loadFail": "Failed to load request.",
+        "actionFail": "Failed to update status."
+    },
+    "tdoOnePage": {
+        "title": "TDO Dashboard",
+        "subtitle": "Approve fund requests and monitor escalations",
+        "scope": "Scope",
+        "back": "Back",
+        "pendingFunds": "Pending requests",
+        "approvedFunds": "Approved",
+        "rejectedFunds": "Rejected",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "loading": "Loading…",
+        "empty": "No fund requests found.",
+        "created": "Created",
+        "status": "Status",
+        "reason": "Reason",
+        "panchayat": "Panchayat",
+        "issueId": "Issue ID",
+        "open": "Open",
+        "viewDetails": "View details",
+        "modalTitle": "Fund Request",
+        "modalSubtitle": "Approve or reject with a comment",
+        "close": "Close",
+        "amount": "Amount",
+        "comment": "TDO Comment",
+        "commentPh": "Example: Approved under scheme budget / Need clarification",
+        "approve": "Approve",
+        "reject": "Reject",
+        "working": "Working…",
+        "missingScope": "Your TDO profile is missing district/taluk.",
+        "loadFail": "Failed to load dashboard.",
+        "actionFail": "Failed to update request."
+    },
+    "pdoDashboard": {
+        "title": "Gram Panchayat PDO Dashboard",
+        "subtitle": "Manage village issues, assign work, track resolution & escalations",
+        "loading": "Loading dashboard…",
+        "view": "View",
+        "stats": {
+            "newIssues": "New Issues",
+            "verifiedIssues": "Verified Issues",
+            "inProgress": "In Progress",
+            "escalated": "Escalated",
+            "resolved": "Resolved"
+        },
+        "errors": {
+            "profileMissing": "Authority profile missing (authorities/{uid} not found).",
+            "panchayatMissing": "panchayatId missing in authorities profile."
+        }
+    },
+    "authorityRegister": {
+        "title": "Authority Registration",
+        "subtitle": "Register as PDO / Village In-charge / TDO / DDO. Admin will verify your profile.",
+        "labels": {
+            "role": "Role",
+            "email": "Email",
+            "password": "Password",
+            "fullName": "Full Name",
+            "mobile": "Mobile",
+            "aadhaar": "Aadhaar Number",
+            "officeAddress": "Office Address",
+            "district": "District",
+            "taluk": "Taluk",
+            "gp": "Gram Panchayat",
+            "village": "Village",
+            "panchayatId": "Panchayat ID"
+        },
+        "roles": {
+            "pdo": "Gram Panchayat PDO",
+            "village_incharge": "Village In-charge",
+            "tdo": "Taluk Development Officer (TDO)",
+            "ddo": "District Development Officer (DDO)"
+        },
+        "placeholders": {
+            "email": "official@email.com",
+            "password": "Create a password",
+            "aadhaar": "We store only last 4 digits",
+            "district": "District",
+            "taluk": "Taluk",
+            "gp": "Gram Panchayat name",
+            "village": "Village",
+            "panchayatId": "Official Panchayat ID"
+        },
+        "storedAs": "Stored as:",
+        "type": "type",
+        "creating": "Creating account...",
+        "submit": "Register & Submit for Verification",
+        "errors": {
+            "required": "Please fill all required fields.",
+            "aadhaarLast4": "Enter Aadhaar (we store only last 4 digits).",
+            "talukRequired": "Taluk is required.",
+            "gpRequired": "Gram Panchayat is required.",
+            "villageRequired": "Village is required.",
+            "panchayatIdRequired": "Panchayat ID is required.",
+            "failed": "Registration failed"
+        }
+    },
+    "authorityStatus": {
+        "title": "Authority Verification Status",
+        "checking": "Checking verification status…",
+        "pending": {
+            "title": "Verification Pending",
+            "submittedAs": "Your registration as",
+            "submittedAsEnd": "has been submitted.",
+            "line1": "Admin will verify your details (Name, Mobile, Aadhaar).",
+            "line2": "You will receive an email once approved."
+        },
+        "verified": {
+            "title": "Verified Successfully",
+            "desc": "Your authority account has been approved by Admin.",
+            "button": "Go to Authority Dashboard"
+        },
+        "rejected": {
+            "title": "Verification Rejected",
+            "desc": "Your verification was rejected by Admin.",
+            "reason": "Reason:",
+            "note": "Please contact admin or re-register with correct details."
+        },
+        "footer": "VITAL • Unnat Bharat Abhiyan • Digital India"
+    },
+    "authorityStatus": {
+        "title": "Authority Verification Status",
+        "checking": "Checking verification status…",
+        "pending": {
+            "title": "Verification Pending",
+            "submittedAs": "Your registration as",
+            "submittedAsEnd": "has been submitted.",
+            "line1": "Admin will verify your details (Name, Mobile, Aadhaar).",
+            "line2": "You will receive an email once approved."
+        },
+        "verified": {
+            "title": "Verified Successfully",
+            "desc": "Your authority account has been approved by Admin.",
+            "button": "Go to Authority Dashboard"
+        },
+        "rejected": {
+            "title": "Verification Rejected",
+            "desc": "Your verification was rejected by Admin.",
+            "reason": "Reason:",
+            "note": "Please contact admin or re-register with correct details."
+        },
+        "footer": "VITAL • Unnat Bharat Abhiyan • Digital India"
+    },
+    "fundApprove": {
+        "title": "Approve Fund Request",
+        "subtitle": "Review the request and take action (Approve / Reject).",
+        "back": "Back",
+        "requestId": "Request ID",
+        "amount": "Requested Amount",
+        "scope": "Scope",
+        "reason": "Reason",
+        "comment": "TDO Comment (optional)",
+        "commentPh": "Write your comment…",
+        "alreadyDecided": "This request is already decided.",
+        "approve": "Approve",
+        "approving": "Approving…",
+        "reject": "Reject",
+        "rejecting": "Rejecting…",
+        "status_pending": "PENDING",
+        "status_approved": "APPROVED",
+        "status_rejected": "REJECTED",
+        "notFound": "Fund request not found.",
+        "missingScope": "This request is missing district/taluk scope fields.",
+        "notAllowed": "You are not allowed to act on this request.",
+        "loadFail": "Failed to load request.",
+        "actionFail": "Failed to update request."
+    },
+    "tdoOnePage": {
+        "title": "TDO Fund Dashboard",
+        "subtitle": "Approve or reject fund requests within your taluk scope.",
+        "scope": "Scope",
+        "back": "Back",
+        "pendingFunds": "Pending Requests",
+        "approvedFunds": "Approved Requests",
+        "rejectedFunds": "Rejected Requests",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "loading": "Loading…",
+        "empty": "No fund requests found for this tab.",
+        "created": "Created",
+        "status": "Status",
+        "reason": "Reason",
+        "panchayat": "Panchayat",
+        "issueId": "Issue ID",
+        "open": "Open",
+        "viewDetails": "View details",
+        "modalTitle": "Fund Request",
+        "modalSubtitle": "Review details and take action.",
+        "close": "Close",
+        "amount": "Amount",
+        "comment": "TDO Comment",
+        "commentPh": "Write your comment…",
+        "working": "Working…",
+        "approve": "Approve",
+        "reject": "Reject",
+        "status_pending": "PENDING",
+        "status_approved": "APPROVED",
+        "status_rejected": "REJECTED",
+        "missingScope": "Your profile is missing district/taluk scope.",
+        "loadFail": "Failed to load fund requests.",
+        "actionFail": "Failed to update request."
+    },
+    "tdoDashboard": {
+        "title": "Taluk Development Officer Dashboard",
+        "pendingFunds": "Pending Fund Requests",
+        "view": "View"
+    },
+    "tdoFundMap": {
+        "title": "Fund Requests Map",
+        "back": "Back",
+        "loading": "Loading map…",
+        "empty": "No pending fund requests.",
+        "missingScope": "District or Taluk missing in TDO profile.",
+        "loadFail": "Failed to load fund requests."
+    },
+    "fundApprove": {
+        "title": "Fund Approval",
+        "amount": "Amount",
+        "reason": "Reason",
+        "comment": "Add comment (optional)",
+        "approve": "Approve",
+        "reject": "Reject"
+    },
+    "authorityRegister": {
+        "title": "Authority Registration",
+        "subtitle": "Register as a government authority to manage village issues",
+        "labels": {
+            "role": "Role",
+            "email": "Email",
+            "password": "Password",
+            "fullName": "Full Name",
+            "mobile": "Mobile Number",
+            "aadhaar": "Aadhaar Number",
+            "officeAddress": "Office Address",
+            "district": "District",
+            "taluk": "Taluk",
+            "gp": "Gram Panchayat",
+            "village": "Village",
+            "panchayatId": "Panchayat ID"
+        },
+        "placeholders": {
+            "email": "Enter official email",
+            "password": "Enter password",
+            "aadhaar": "12-digit Aadhaar number",
+            "district": "Enter district",
+            "taluk": "Enter taluk",
+            "gp": "Enter gram panchayat",
+            "village": "Enter village",
+            "panchayatId": "Enter panchayat ID"
+        },
+        "roles": {
+            "pdo": "Panchayat Development Officer (PDO)",
+            "village_incharge": "Village Incharge",
+            "tdo": "Taluk Development Officer (TDO)",
+            "ddo": "District Development Officer (DDO)"
+        },
+        "storedAs": "Stored as last 4 digits:",
+        "type": "scope",
+        "submit": "Register",
+        "creating": "Creating account...",
+        "errors": {
+            "required": "Please fill all required fields.",
+            "aadhaarLast4": "Please enter Aadhaar number (only last 4 digits are stored).",
+            "talukRequired": "Taluk is required.",
+            "gpRequired": "Gram Panchayat is required.",
+            "villageRequired": "Village is required.",
+            "panchayatIdRequired": "Panchayat ID is required.",
+            "failed": "Registration failed. Please try again.",
+            "emailExists": "This email is already registered.",
+            "invalidEmail": "Invalid email address.",
+            "weakPassword": "Password must be at least 6 characters.",
+            "operationNotAllowed": "Email/Password login is disabled."
+        }
+    },
+    "Authority": {
+        "pdoTitle": "PDO Dashboard",
+        "viTitle": "Village Incharge Dashboard",
+        "tdoTitle": "TDO Dashboard",
+        "loading": "Loading dashboard…",
+        "backLogin": "Go to Login",
+        "forbidden": "You don’t have access to this dashboard."
+    },
+    "Authority": {
+        "pdoTitle": "PDO Dashboard",
+        "pdoSubtitle": "Manage verified issues, assignments, and fund requests.",
+        "viTitle": "Village Incharge Dashboard",
+        "viSubtitle": "Verify villagers & issues, forward to PDO, and upload proof.",
+        "tdoTitle": "TDO Dashboard",
+        "tdoSubtitle": "Review fund requests and monitor escalations.",
+        "loading": "Loading dashboard…",
+        "backLogin": "Go to Login",
+        "forbidden": "You don’t have access to this dashboard.",
+        "openIssues": "Open Issues",
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "resolved": "Resolved",
+        "overdue": "Overdue",
+        "view": "View",
+        "manage": "Manage",
+        "request": "Request",
+        "download": "Download",
+        "verify": "Verify",
+        "forward": "Forward",
+        "complete": "Complete",
+        "review": "Review",
+        "handle": "Handle",
+        "fundRequests": "Fund Requests",
+        "pdoAction1Title": "View Verified Issues",
+        "pdoAction1Desc": "See issues verified by Village Incharge.",
+        "pdoAction2Title": "Track Work Progress",
+        "pdoAction2Desc": "Monitor assigned tasks and progress updates.",
+        "pdoAction3Title": "Raise Fund Request",
+        "pdoAction3Desc": "Create fund requests and send to TDO.",
+        "pdoAction4Title": "Download Reports",
+        "pdoAction4Desc": "Export report for your Panchayat.",
+        "viAction1Title": "Verify Villagers",
+        "viAction1Desc": "Approve villagers to allow issue reporting.",
+        "viAction2Title": "Verify Issues",
+        "viAction2Desc": "Check photo + geo-tag and confirm authenticity.",
+        "viAction3Title": "Forward to PDO",
+        "viAction3Desc": "Forward verified issues to PDO for assignment.",
+        "viAction4Title": "Upload Completion Proof",
+        "viAction4Desc": "Upload proof photo and mark work as completed.",
+        "tdoAction1Title": "Review Fund Requests",
+        "tdoAction1Desc": "Approve or reject fund requests from PDO.",
+        "tdoAction2Title": "Handle Escalations",
+        "tdoAction2Desc": "Intervene in overdue and escalated issues.",
+        "tdoAction3Title": "Taluk Analytics",
+        "tdoAction3Desc": "Track SLA performance and trends.",
+        "tdoAction4Title": "Download Reports",
+        "tdoAction4Desc": "Export taluk-level reports."
+    },
+    "common": {
+        "loading": "Loading…",
+        "retry": "Retry",
+        "back": "Back",
+        "goToLogin": "Go to Login",
+        "permissionDenied": "Permission denied. Your account is not verified or access is restricted.",
+        "indexRequired": "This action requires a database index. Please try again in a few minutes.",
+        "somethingWrong": "Something went wrong. Please try again."
+    },
+    "firestore": {
+        "index": {
+            "required": "The query requires an index.",
+            "creating": "Index is being created. This may take a few minutes.",
+            "created": "Index created successfully. Reloading…"
+        }
+    },
+    "authority": {
+        "status": {
+            "pending": "Your verification is pending.",
+            "verified": "Your account is verified.",
+            "rejected": "Your verification was rejected. Please contact admin."
+        }
+    },
+    "authorityDashboard": {
+        "pdo": {
+            "title": "PDO Dashboard",
+            "subtitle": "Manage Panchayat-level issues and assignments",
+            "stats": {
+                "total": "Total Issues",
+                "pending": "Pending",
+                "inProgress": "In Progress",
+                "resolved": "Resolved",
+                "overdue": "Overdue"
+            },
+            "actions": {
+                "viewIssues": "View Issues",
+                "assignWork": "Assign Work",
+                "raiseFund": "Raise Fund Request",
+                "downloadReport": "Download Panchayat Report"
+            }
+        },
+        "vi": {
+            "title": "Village In-Charge Dashboard",
+            "subtitle": "Verify villagers and issues",
+            "actions": {
+                "verifyVillagers": "Verify Villagers",
+                "verifyIssues": "Verify Issues",
+                "forwardPDO": "Forward to PDO",
+                "uploadProof": "Upload Completion Proof"
+            }
+        },
+        "tdo": {
+            "title": "TDO Dashboard",
+            "subtitle": "Monitor escalations and approve funds",
+            "actions": {
+                "reviewFunds": "Review Fund Requests",
+                "handleEscalations": "Handle Escalations",
+                "talukAnalytics": "Taluk Analytics",
+                "downloadReports": "Download Reports"
+            }
+        }
+    },
+    "issues": {
+        "list": {
+            "title": "Issues",
+            "empty": "No issues found",
+            "open": "Open Issue",
+            "createdAt": "Created At",
+            "status": "Status"
+        },
+        "status": {
+            "reported": "Reported",
+            "verified": "Verified",
+            "assigned": "Assigned",
+            "inProgress": "In Progress",
+            "completed": "Completed",
+            "closed": "Closed",
+            "escalated": "Escalated"
+        }
+    },
+    "pagination": {
+        "next": "Next",
+        "previous": "Previous",
+        "loadingMore": "Loading more…"
+    },
+    "VillagerMyIssues": {
+        "title": "My Issues",
+        "subtitle": "Track all issues you have reported.",
+        "loading": "Loading issues…",
+        "actions": {
+            "report": "Report Issue",
+            "retry": "Retry",
+            "checkStatus": "Check Status"
+        },
+        "labels": {
+            "issueId": "Issue ID",
+            "category": "Category",
+            "created": "Created",
+            "untitled": "Untitled Issue"
+        },
+        "empty": {
+            "title": "No issues yet",
+            "desc": "Once you report an issue, it will appear here.",
+            "cta": "Report your first issue"
+        },
+        "errors": {
+            "missingIndex": "This list needs a Firestore index. Open Firebase console index link and create it, then refresh.",
+            "permissionDenied": "Permission denied. Your account might be unverified or rules blocked this read.",
+            "generic": "Failed to load issues."
+        }
+    },
+    "authorityRegister": {
+        "title": "Authority Registration",
+        "subtitle": "Create your authority account (verification required).",
+        "creating": "Creating…",
+        "submit": "Create Account",
+        "type": "Type",
+        "storedAs": "Stored as (last 4 digits):",
+        "roles": {
+            "pdo": "PDO (Gram Panchayat)",
+            "village_incharge": "Village Incharge",
+            "tdo": "TDO (Taluk)",
+            "ddo": "DDO (District)"
+        },
+        "labels": {
+            "role": "Select Role",
+            "email": "Email",
+            "password": "Password",
+            "fullName": "Full Name",
+            "mobile": "Mobile",
+            "aadhaar": "Aadhaar (Only last 4 stored)",
+            "officeAddress": "Office Address",
+            "district": "District",
+            "taluk": "Taluk",
+            "gp": "Gram Panchayat",
+            "village": "Village",
+            "panchayatId": "Panchayat ID"
+        },
+        "placeholders": {
+            "email": "name@gmail.com",
+            "password": "Minimum 6 characters",
+            "aadhaar": "Enter Aadhaar number",
+            "district": "Enter district",
+            "taluk": "Enter taluk",
+            "gp": "Enter gram panchayat",
+            "village": "Enter village",
+            "panchayatId": "Example: GP-MYS-014"
+        },
+        "helper": {
+            "panchayatIdForPDO": "PDO scope depends on Panchayat ID.",
+            "panchayatIdForVI": "Village Incharge must use same Panchayat ID to verify villagers/issues."
+        },
+        "errors": {
+            "required": "Please fill all required fields.",
+            "aadhaarLast4": "Enter Aadhaar (at least last 4 digits).",
+            "talukRequired": "Taluk is required.",
+            "gpRequired": "Gram Panchayat is required.",
+            "villageRequired": "Village is required.",
+            "panchayatIdRequired": "Panchayat ID is required.",
+            "emailExists": "This email is already in use.",
+            "invalidEmail": "Invalid email address.",
+            "weakPassword": "Password is too weak.",
+            "operationNotAllowed": "Email/password login is disabled in Firebase.",
+            "permissionDenied": "Permission denied. Firestore rules blocked profile creation.",
+            "failedPrecondition": "Missing Firestore index. Create the required index link.",
+            "failed": "Registration failed."
+        }
+    },
+    "tdoOnePage": {
+        "welcome": "TDO Dashboard",
+        "subtitle": "Taluk Development Officer - Issue monitoring & escalation",
+        "loading": "Loading...",
+        "stats": {
+            "title": "Dashboard Statistics",
+            "villagers": "Total Villagers",
+            "fundRequests": "Fund Requests",
+            "pending": "Pending",
+            "approved": "Approved",
+            "workers": "Total Workers",
+            "issues": "Total Issues",
+            "escalated": "Escalated Issues",
+            "breached": "SLA Breached"
+        }
+    },
+    "tdoFundMap": {
+        "title": "Fund Request Map",
+        "subtitle": "View pending fund requests in your jurisdiction",
+        "back": "Back",
+        "loading": "Loading map...",
+        "missingScope": "Your jurisdiction (district/taluk) is not configured",
+        "loadFail": "Failed to load fund requests",
+        "empty": "No pending fund requests in your area"
+    },
+    "fundApprove": {
+        "title": "Approve Fund Request",
+        "subtitle": "Review and decide on funding allocation",
+        "back": "Back",
+        "requestId": "Request ID",
+        "amount": "Amount Requested",
+        "scope": "Jurisdiction",
+        "reason": "Reason for Request",
+        "comment": "Your Comments",
+        "commentPh": "Add remarks (optional)...",
+        "status_pending": "PENDING",
+        "status_approved": "APPROVED",
+        "status_rejected": "REJECTED",
+        "alreadyDecided": "This request has already been decided",
+        "notFound": "Fund request not found",
+        "missingScope": "Jurisdiction information missing",
+        "notAllowed": "You don't have permission for this request",
+        "loadFail": "Failed to load details",
+        "actionFail": "Action failed. Please try again.",
+        "approve": "Approve Request",
+        "approving": "Approving...",
+        "reject": "Reject Request",
+        "rejecting": "Rejecting..."
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "back": "Back"
+    },
+    "tdoOnePage": {
+        "title": "TDO Dashboard",
+        "welcome": "Welcome",
+        "subtitle": "Taluk Development Officer - Issue monitoring & escalation",
+        "loading": "Loading...",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "empty": "No data available",
+        "back": "Back",
+        "all": "All",
+        "stats": {
+            "title": "Dashboard Statistics",
+            "villagers": "Total Villagers",
+            "fundRequests": "Fund Requests",
+            "pending": "Pending",
+            "approved": "Approved",
+            "workers": "Total Workers",
+            "issues": "Total Issues",
+            "escalated": "Escalated Issues",
+            "breached": "SLA Breached"
+        },
+        "tabs": {
+            "all": "All",
+            "pending": "Pending",
+            "approved": "Approved",
+            "rejected": "Rejected"
+        },
+        "cards": {
+            "total": "Total Issues",
+            "pending": "Pending Issues",
+            "escalated": "Escalated Issues",
+            "breached": "SLA Breached"
+        },
+        "quickActions": {
+            "viewMap": "View Map",
+            "approveFunds": "Approve Funds",
+            "escalate": "Escalate Issues",
+            "analytics": "Analytics",
+            "viewMapDesc": "Geographic view of pending requests",
+            "approveFundsDesc": "Review pending fund requests",
+            "escalateDesc": "Escalate to higher authorities",
+            "analyticsDesc": "Performance reports & insights"
+        },
+        "recentActivity": "Recent Activity",
+        "viewAll": "View All",
+        "error": "An error occurred",
+        "missingScope": "Your jurisdiction (district/taluk) is not configured",
+        "loadFail": "Failed to load data"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "back": "Back",
+        "retry": "Retry",
+        "profile": "Profile"
+    }
+,
+  "tdoOnePage": {
+    "title": "TDO Dashboard",
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "pleaseWait": "Please wait",
+    "searchPlaceholder": "Search requests...",
+    "dashboard": "Dashboard",
+    "requests": "Requests",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "logout": "Logout",
+    "talukId": "Taluk ID",
+    "debug": "Debug",
+    "refresh": "Refresh",
+    "missingTalukId": "Your profile is missing talukId. Please contact admin.",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "awaitingReview": "Awaiting review",
+    "approvedRequests": "Approved requests",
+    "rejectedRequests": "Rejected requests",
+    "view": "View",
+    "requestsFound": "requests found",
+    "searchResults": "Search results",
+    "of": "of",
+    "noSearchResults": "No matching requests found",
+    "tryDifferentSearch": "Try a different search term",
+    "checkOtherCategories": "Check other categories for requests",
+    "panchayat": "Panchayat",
+    "review": "Review",
+    "viewDetails": "View Details",
+    "quickApprove": "Quick Approve",
+    "reviewRequest": "Review Request",
+    "fundRequestReview": "Fund Request Review",
+    "reviewAndTakeAction": "Review and take action",
+    "status": "Status",
+    "issueId": "Issue ID",
+    "submitted": "Submitted",
+    "requestDetails": "Request Details",
+    "reason": "Reason",
+    "purpose": "Purpose",
+    "yourCommentOptional": "Your Comment (Optional)",
+    "commentPlaceholder": "Add comments about your decision...",
+    "processing": "Processing...",
+    "approveRequest": "Approve Request",
+    "rejectRequest": "Reject Request",
+    "status_pending": "Pending",
+    "status_approved": "Approved",
+    "status_rejected": "Rejected"
+  }
+
+}
