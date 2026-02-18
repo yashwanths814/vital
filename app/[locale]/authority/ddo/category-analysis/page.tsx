@@ -170,7 +170,7 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ✅ Fixed animation variants - Perfectly typed for Framer Motion
+  // Animation variants - Perfectly typed for Framer Motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -181,7 +181,6 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ✅ Fixed with proper spring animation types
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -196,7 +195,6 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ✅ Fixed with proper animation types
   const statCardVariants = {
     hidden: { scale: 0.9, opacity: 0 },
     visible: {
@@ -211,21 +209,22 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ✅ Fixed spinner animation - Now properly typed
-  const spinnerAnimation = {
+  // ✅ Fixed: Split spinner animations into separate objects
+  const rotateAnimation = {
     rotate: 360,
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      ease: "linear"
+    }
+  };
+
+  const scaleAnimation = {
     scale: [1, 1.1, 1],
     transition: {
-      rotate: {
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "linear"
-      },
-      scale: {
-        duration: 1,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
+      duration: 1,
+      repeat: Infinity,
+      ease: "easeInOut"
     }
   };
 
@@ -256,17 +255,22 @@ export default function CategoryAnalysisPage() {
         </motion.div>
 
         {loading ? (
-          // Loading Animation - Fixed implementation
+          // Loading Animation - Fixed with separate animations
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-12"
           >
             <motion.div
-              animate={spinnerAnimation}
+              animate={rotateAnimation}
               className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full mb-4"
             />
-            <p className="text-green-700 text-sm sm:text-base">{t.loading}</p>
+            <motion.div
+              animate={scaleAnimation}
+              className="flex justify-center"
+            >
+              <p className="text-green-700 text-sm sm:text-base">{t.loading}</p>
+            </motion.div>
           </motion.div>
         ) : (
           <>
