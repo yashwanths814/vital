@@ -170,9 +170,7 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // Animation variants - Deliberately causing the TypeScript error
-  // ❌ These will cause: "Type '{ hidden: { scale: number; opacity: number; }; visible: { scale: number; opacity: number; transition: { type: string; stiffness: number; damping: number; }; }; }' is not assignable to type 'Variants'"
-  
+  // ✅ Fixed animation variants - Perfectly typed for Framer Motion
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -183,33 +181,44 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ❌ This causes the error - invalid transition structure
+  // ✅ Fixed with proper spring animation types
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        type: "invalid-spring-type", // Invalid type value
+        type: "spring" as const,  // Use const assertion for literal type
         stiffness: 100,
         damping: 12,
-        // Missing required properties that TypeScript expects
+        duration: 0.5
       }
     }
   };
 
-  // ❌ This also causes the error - incompatible transition type
+  // ✅ Fixed with proper animation types
   const statCardVariants = {
     hidden: { scale: 0.9, opacity: 0 },
     visible: {
       scale: 1,
       opacity: 1,
       transition: {
-        type: "custom", // Should be "spring", "tween", or "inertia"
+        type: "spring" as const,  // Use const assertion for literal type
         stiffness: 200,
         damping: 15,
-        // The structure doesn't match Framer Motion's Transition type
-        customProp: "this will cause issues", // Extra property that's not allowed
+        duration: 0.4
+      }
+    }
+  };
+
+  // Loading spinner animation
+  const spinnerVariants = {
+    animate: {
+      rotate: 360,
+      scale: [1, 1.1, 1],
+      transition: {
+        rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
+        scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
       }
     }
   };
@@ -248,14 +257,8 @@ export default function CategoryAnalysisPage() {
             className="flex flex-col items-center justify-center py-12"
           >
             <motion.div
-              animate={{
-                rotate: 360,
-                scale: [1, 1.1, 1]
-              }}
-              transition={{
-                rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
-                scale: { duration: 1, repeat: Infinity }
-              }}
+              variants={spinnerVariants}
+              animate="animate"
               className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full mb-4"
             />
             <p className="text-green-700 text-sm sm:text-base">{t.loading}</p>
@@ -315,7 +318,8 @@ export default function CategoryAnalysisPage() {
                     <motion.div
                       key={category.name}
                       variants={itemVariants}
-                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      whileHover={{ y: -4 }}
+                      transition={{ duration: 0.2 }}
                       className="bg-white border border-green-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <h3 className="text-base sm:text-lg font-bold text-green-900 mb-3 sm:mb-4 line-clamp-1">
@@ -329,7 +333,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.3 }}
+                            transition={{ delay: index * 0.1 + 0.3, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold text-green-900"
                           >
                             {category.total}
@@ -342,7 +346,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.4 }}
+                            transition={{ delay: index * 0.1 + 0.4, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold text-green-600"
                           >
                             {category.resolved}
@@ -355,7 +359,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.5 }}
+                            transition={{ delay: index * 0.1 + 0.5, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold text-yellow-600"
                           >
                             {category.pending}
@@ -368,7 +372,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.6 }}
+                            transition={{ delay: index * 0.1 + 0.6, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold text-red-600"
                           >
                             {category.escalated}
@@ -381,7 +385,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.7 }}
+                            transition={{ delay: index * 0.1 + 0.7, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold"
                           >
                             {category.gps}
@@ -394,7 +398,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.8 }}
+                            transition={{ delay: index * 0.1 + 0.8, type: "spring", stiffness: 200, damping: 15 }}
                             className={`font-bold ${
                               category.resolutionRate >= 80 ? 'text-green-600' :
                               category.resolutionRate >= 60 ? 'text-yellow-600' : 'text-red-600'
@@ -410,7 +414,7 @@ export default function CategoryAnalysisPage() {
                           <motion.span 
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: index * 0.1 + 0.9 }}
+                            transition={{ delay: index * 0.1 + 0.9, type: "spring", stiffness: 200, damping: 15 }}
                             className="font-bold"
                           >
                             {category.avgResolutionTime} {t.days}
@@ -428,7 +432,7 @@ export default function CategoryAnalysisPage() {
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${category.resolutionRate}%` }}
-                              transition={{ delay: index * 0.1 + 1.2, duration: 0.8 }}
+                              transition={{ delay: index * 0.1 + 1.2, duration: 0.8, ease: "easeOut" }}
                               className="h-full bg-green-500 rounded-full"
                             />
                           </div>
@@ -443,6 +447,7 @@ export default function CategoryAnalysisPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
                 className="text-center py-12 bg-white rounded-2xl border border-green-100"
               >
                 <p className="text-green-700 text-sm sm:text-base">{t.noCategories}</p>
