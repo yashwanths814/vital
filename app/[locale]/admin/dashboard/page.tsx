@@ -6,6 +6,36 @@ import { useAdminAuth } from "../../../context/AdminAuthContext";
 import Screen from "../../../components/Screen";
 import { DashboardService, DashboardStats } from "../../../services/firebase/dashboardService";
 
+// Add TypeScript interfaces
+interface ActionCardProps {
+    title: string;
+    desc: string;
+    cta: string;
+    onClick: () => void;
+    icon: string;
+    color: string;
+    stats?: number;
+    urgent?: boolean;
+}
+
+interface VerifyCardProps {
+    title: string;
+    pending: number;
+    desc: string;
+    cta: string;
+    onClick: () => void;
+    icon: string;
+    color: string;
+    pendingLabel: string;
+    total: number;
+}
+
+interface PieChartData {
+    label: string;
+    value: number;
+    color: string;
+}
+
 export default function AdminDashboard() {
     const router = useRouter();
     const params = useParams() as { locale?: string };
@@ -155,6 +185,12 @@ export default function AdminDashboard() {
                 completionRate: "Completion Rate",
                 urgent: "Urgent",
                 viewAll: "View All",
+                items: "Items",
+                verificationProgress: "Verification progress",
+                outOf: "out of",
+                total: "total",
+                systemActive: "System active",
+                noData: "No data available",
             },
             kn: {
                 title: "ಆಡ್ಮಿನ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
@@ -199,6 +235,12 @@ export default function AdminDashboard() {
                 completionRate: "ಪೂರ್ಣಗೊಳಿಸುವಿಕೆ ದರ",
                 urgent: "ತುರ್ತು",
                 viewAll: "ಎಲ್ಲವನ್ನೂ ನೋಡಿ",
+                items: "ಐಟಂಗಳು",
+                verificationProgress: "ಪರಿಶೀಲನೆ ಪ್ರಗತಿ",
+                outOf: "ರಲ್ಲಿ",
+                total: "ಒಟ್ಟು",
+                systemActive: "ವ್ಯವಸ್ಥೆ ಸಕ್ರಿಯವಾಗಿದೆ",
+                noData: "ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ",
             },
             hi: {
                 title: "एडमिन डैशबोर्ड",
@@ -243,6 +285,12 @@ export default function AdminDashboard() {
                 completionRate: "पूर्णता दर",
                 urgent: "तत्काल",
                 viewAll: "सभी देखें",
+                items: "आइटम",
+                verificationProgress: "सत्यापन प्रगति",
+                outOf: "में से",
+                total: "कुल",
+                systemActive: "सिस्टम सक्रिय",
+                noData: "कोई डेटा उपलब्ध नहीं",
             },
         };
         return L[locale] || L.en;
@@ -318,14 +366,14 @@ export default function AdminDashboard() {
         ]
         : [];
 
-    const issueStatusData = stats ? [
+    const issueStatusData: PieChartData[] = stats ? [
         { label: "Open", value: stats.openIssues, color: "#ef4444" },
         { label: "In Progress", value: stats.inProgress, color: "#f59e0b" },
         { label: "Resolved", value: stats.resolved, color: "#10b981" },
         { label: "Escalated", value: stats.escalated, color: "#8b5cf6" },
     ].filter(item => item.value > 0) : [];
 
-    const userSplitData = stats ? [
+    const userSplitData: PieChartData[] = stats ? [
         { label: "Villagers", value: stats.villagers, color: "#06b6d4" },
         { label: "Authorities", value: stats.authorities, color: "#8b5cf6" },
     ].filter(item => item.value > 0) : [];
@@ -506,7 +554,7 @@ export default function AdminDashboard() {
                             icon="⏰"
                             color="from-orange-500 to-red-500"
                             stats={stats?.escalated}
-                            urgent={stats && stats.escalated > 0}
+                            urgent={stats ? stats.escalated > 0 : false}
                         />
                     </div>
                 </section>
@@ -758,7 +806,7 @@ export default function AdminDashboard() {
                             </p>
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                <span className="text-xs text-gray-500">System active</span>
+                                <span className="text-xs text-gray-500">{t.systemActive}</span>
                             </div>
                         </div>
                     </div>
@@ -786,25 +834,7 @@ export default function AdminDashboard() {
 
 /** ---------- Enhanced UI Components ---------- */
 
-function ActionCard({
-    title,
-    desc,
-    cta,
-    onClick,
-    icon,
-    color,
-    stats,
-    urgent,
-}: {
-    title: string;
-    desc: string;
-    cta: string;
-    onClick: () => void;
-    icon: string;
-    color: string;
-    stats?: number;
-    urgent?: boolean;
-}) {
+function ActionCard({ title, desc, cta, onClick, icon, color, stats, urgent = false }: ActionCardProps) {
     return (
         <div className="group relative bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden">
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${color} opacity-10 group-hover:opacity-20 transition-opacity rounded-full -translate-y-16 translate-x-16`} />
@@ -848,27 +878,7 @@ function ActionCard({
     );
 }
 
-function VerifyCard({
-    title,
-    pending,
-    desc,
-    cta,
-    onClick,
-    icon,
-    color,
-    pendingLabel,
-    total,
-}: {
-    title: string;
-    pending: number;
-    desc: string;
-    cta: string;
-    onClick: () => void;
-    icon: string;
-    color: string;
-    pendingLabel: string;
-    total: number;
-}) {
+function VerifyCard({ title, pending, desc, cta, onClick, icon, color, pendingLabel, total }: VerifyCardProps) {
     const progress = total > 0 ? ((total - pending) / total) * 100 : 0;
 
     return (
@@ -939,7 +949,7 @@ function VerifyCard({
 
 /** ---------- Graph Components with Enhanced Animations ---------- */
 
-function PieChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+function PieChart({ data }: { data: PieChartData[] }) {
     const total = data.reduce((sum, item) => sum + item.value, 0);
     const radius = 80;
     const center = 100;
@@ -1045,7 +1055,7 @@ function PieChart({ data }: { data: { label: string; value: number; color: strin
     );
 }
 
-function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+function DonutChart({ data }: { data: PieChartData[] }) {
     const total = data.reduce((sum, item) => sum + item.value, 0);
     const radius = 60;
     const strokeWidth = 20;
