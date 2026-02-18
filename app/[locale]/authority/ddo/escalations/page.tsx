@@ -396,7 +396,7 @@ export default function EscalationsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                         <button
-                            onClick={() => router.push(`/${locale}/authority/ddo`)}
+                            onClick={() => router.push(`/${locale}/authority/ddo/dashboard`)}
                             className="flex items-center gap-2 text-green-700 hover:text-green-900 mb-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,4 +597,5 @@ export default function EscalationsPage() {
             </div>
         </Screen>
     );
+
 }
