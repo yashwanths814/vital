@@ -1,4 +1,3 @@
-// app/[locale]/authority/ddo/dashboard/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -71,9 +70,9 @@ interface DDOProfile {
   department?: string;
 }
 
-// Simple Card Components with mobile optimization
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white border border-green-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm ${className}`}>
+// Simple Card Components with mobile optimization - FIXED to accept style prop
+const Card = ({ children, className = "", style = {} }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
+  <div className={`bg-white border border-green-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm ${className}`} style={style}>
     {children}
   </div>
 );
