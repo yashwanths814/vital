@@ -780,14 +780,17 @@ export default function VillagerRegisterPage() {
                     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08), 0 4px 12px rgba(239, 68, 68, 0.1);
                 }
 
-                .card-bg {
-                    background: rgba(255, 255, 255, 0.85);
-                    backdrop-filter: blur(8px);
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.25);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
                     position: relative;
                     overflow: hidden;
+                    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
                 }
 
-                .card-bg::before {
+                .glass-card::before {
                     content: '';
                     position: absolute;
                     top: -50%;
@@ -797,7 +800,7 @@ export default function VillagerRegisterPage() {
                     background: linear-gradient(
                         45deg,
                         transparent 30%,
-                        rgba(255, 255, 255, 0.1) 50%,
+                        rgba(255, 255, 255, 0.2) 50%,
                         transparent 70%
                     );
                     animation: shimmer 8s linear infinite;
@@ -821,13 +824,14 @@ export default function VillagerRegisterPage() {
                 }
 
                 .divider span {
-                    background: rgba(255, 255, 255, 0.85);
+                    background: rgba(255, 255, 255, 0.25);
                     padding: 0 1rem;
                     color: rgba(22, 163, 74, 0.8);
                     font-size: 0.9rem;
                     font-weight: 600;
                     position: relative;
                     letter-spacing: 0.3px;
+                    backdrop-filter: blur(4px);
                 }
 
                 .error-text {
@@ -920,7 +924,7 @@ export default function VillagerRegisterPage() {
                 .strength-segment {
                     flex: 1;
                     height: 4px;
-                    background: #e5e7eb;
+                    background: rgba(255, 255, 255, 0.3);
                     border-radius: 2px;
                     transition: all 0.3s ease;
                 }
@@ -938,8 +942,9 @@ export default function VillagerRegisterPage() {
                     align-items: center;
                     gap: 8px;
                     padding: 8px 16px;
-                    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-                    border: 1.5px solid #86efac;
+                    background: rgba(255, 255, 255, 0.25);
+                    backdrop-filter: blur(8px);
+                    border: 1.5px solid rgba(255, 255, 255, 0.5);
                     border-radius: 40px;
                     color: #166534;
                     font-weight: 600;
@@ -952,7 +957,8 @@ export default function VillagerRegisterPage() {
                 .login-button:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
-                    border-color: #4ade80;
+                    border-color: rgba(255, 255, 255, 0.8);
+                    background: rgba(255, 255, 255, 0.35);
                 }
 
                 .login-button:active {
@@ -974,7 +980,7 @@ export default function VillagerRegisterPage() {
                         padding: 12px 16px !important;
                     }
                     
-                    .card-bg {
+                    .glass-card {
                         border-radius: 24px !important;
                     }
                     
@@ -1015,6 +1021,8 @@ export default function VillagerRegisterPage() {
                     .absolute.left-3 span {
                         font-size: 14px !important;
                         padding: 6px 10px !important;
+                        background: rgba(255, 255, 255, 0.25) !important;
+                        backdrop-filter: blur(4px) !important;
                     }
 
                     input.pl-16 {
@@ -1087,12 +1095,19 @@ export default function VillagerRegisterPage() {
                     outline-offset: 2px;
                 }
 
+                /* Green gradient background */
+                body {
+                    background: linear-gradient(135deg, #86efac 0%, #4ade80 50%, #22c55e 100%);
+                    min-height: 100vh;
+                }
+
                 .orb {
                     position: absolute;
                     border-radius: 50%;
                     filter: blur(60px);
-                    opacity: 0.15;
+                    opacity: 0.2;
                     animation: float 8s ease-in-out infinite;
+                    background: rgba(255, 255, 255, 0.4);
                 }
 
                 .orb-1 {
@@ -1100,7 +1115,7 @@ export default function VillagerRegisterPage() {
                     right: 5%;
                     width: 300px;
                     height: 300px;
-                    background: #4ade80;
+                    background: rgba(255, 255, 255, 0.4);
                     animation-delay: 0s;
                 }
 
@@ -1109,7 +1124,7 @@ export default function VillagerRegisterPage() {
                     left: 5%;
                     width: 250px;
                     height: 250px;
-                    background: #22c55e;
+                    background: rgba(255, 255, 255, 0.3);
                     animation-delay: -2s;
                 }
 
@@ -1118,12 +1133,12 @@ export default function VillagerRegisterPage() {
                     left: 30%;
                     width: 200px;
                     height: 200px;
-                    background: #86efac;
+                    background: rgba(255, 255, 255, 0.35);
                     animation-delay: -4s;
                 }
             `}</style>
 
-            <div className="min-h-screen flex items-center justify-center p-4 animate-fadeIn">
+            <div className="min-h-screen flex items-center justify-center p-4 animate-fadeIn" style={{ background: 'linear-gradient(135deg, #86efac 0%, #4ade80 50%, #22c55e 100%)' }}>
                 <div className="w-full max-w-3xl relative">
                     {/* Animated background orbs */}
                     <div className="orb orb-1"></div>
@@ -1135,9 +1150,9 @@ export default function VillagerRegisterPage() {
                         <div className="flex items-center justify-between flex-wrap gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="header-icon animate-pulse-slow">
-                                    <FiShield className="w-9 h-9 text-green-700" />
+                                    <FiShield className="w-9 h-9 text-white drop-shadow-lg" />
                                 </div>
-                                <h1 className="text-3xl font-bold text-green-900 tracking-tight">
+                                <h1 className="text-3xl font-bold text-white drop-shadow-lg tracking-tight">
                                     {t.title}
                                 </h1>
                             </div>
@@ -1151,18 +1166,18 @@ export default function VillagerRegisterPage() {
                                 <span>{t.loginHere}</span>
                             </button>
                         </div>
-                        <p className="text-base text-green-700/75 leading-relaxed font-semibold mt-4">
+                        <p className="text-base text-white/90 leading-relaxed font-semibold mt-4 drop-shadow">
                             {t.subtitle}
                         </p>
                     </div>
 
                     {/* Mobile login link */}
                     <div className="sm:hidden mb-4 text-center animate-slideUp delay-100">
-                        <p className="text-sm text-green-700">
+                        <p className="text-sm text-white drop-shadow">
                             {t.alreadyRegistered}{" "}
                             <button
                                 onClick={() => router.push(`/${locale}/villager/login`)}
-                                className="text-green-600 font-semibold underline underline-offset-2 hover:text-green-700 transition-colors"
+                                className="text-white font-semibold underline underline-offset-2 hover:text-white/80 transition-colors"
                             >
                                 {t.loginHere}
                             </button>
@@ -1171,8 +1186,8 @@ export default function VillagerRegisterPage() {
 
                     {/* Error Alert */}
                     {err && (
-                        <div className="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50/80 animate-slideUp delay-200">
-                            <div className="flex items-start gap-3 text-red-700">
+                        <div className="mb-6 p-4 rounded-2xl border border-red-200/30 bg-red-500/20 backdrop-blur-sm animate-slideUp delay-200">
+                            <div className="flex items-start gap-3 text-white">
                                 <FiAlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 animate-pulse" />
                                 <span className="text-sm leading-snug">{err}</span>
                             </div>
@@ -1181,16 +1196,16 @@ export default function VillagerRegisterPage() {
 
                     {/* Success Message */}
                     {success && (
-                        <div className="mb-6 p-6 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-500 shadow-2xl animate-bounceIn">
+                        <div className="mb-6 p-6 rounded-3xl bg-gradient-to-r from-green-500/80 to-emerald-500/80 backdrop-blur-sm shadow-2xl animate-bounceIn">
                             <div className="flex items-center gap-3 text-white">
-                                <div className="p-2 bg-white rounded-full">
-                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="p-2 bg-white/30 backdrop-blur-sm rounded-full">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg">Registration Successful!</h3>
-                                    <p className="text-sm text-green-50">Redirecting to status page...</p>
+                                    <p className="text-sm text-white/80">Redirecting to status page...</p>
                                 </div>
                             </div>
                         </div>
@@ -1198,11 +1213,11 @@ export default function VillagerRegisterPage() {
 
                     {/* Main Form Card */}
                     {!success && (
-                        <div className="card-bg border border-green-100 rounded-3xl shadow-lg overflow-hidden animate-slideUp delay-300">
+                        <div className="glass-card rounded-3xl shadow-xl overflow-hidden animate-slideUp delay-300">
                             <div className="p-6 sm:p-8">
                                 {/* Personal Information Section */}
                                 <div className="mb-8">
-                                    <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2 animate-fadeIn delay-400">
+                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 animate-fadeIn delay-400 drop-shadow">
                                         <User className="w-5 h-5 animate-float" />
                                         Personal Information
                                     </h3>
@@ -1210,8 +1225,8 @@ export default function VillagerRegisterPage() {
                                     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                                         {/* Name */}
                                         <div className="col-span-1 animate-fadeIn delay-500">
-                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                                <User className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                            <label className="text-sm font-semibold text-white mb-2 flex items-center gap-2 drop-shadow">
+                                                <User className="w-4 h-4 text-white flex-shrink-0" />
                                                 <span className="truncate">{t.fullName}</span>
                                             </label>
                                             <input
@@ -1220,7 +1235,7 @@ export default function VillagerRegisterPage() {
                                                 onChange={(e) => setName(e.target.value)}
                                                 onBlur={() => setTouched(prev => ({ ...prev, name: true }))}
                                                 onKeyPress={handleKeyPress}
-                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-600/50 text-base ${
                                                     touched.name && !name.trim() ? 'error' : ''
                                                 }`}
                                                 placeholder={t.enterFullName}
@@ -1230,8 +1245,8 @@ export default function VillagerRegisterPage() {
 
                                         {/* Email */}
                                         <div className="col-span-1 animate-fadeIn delay-600">
-                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                                <Mail className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                            <label className="text-sm font-semibold text-white mb-2 flex items-center gap-2 drop-shadow">
+                                                <Mail className="w-4 h-4 text-white flex-shrink-0" />
                                                 <span className="truncate">{t.email}</span>
                                             </label>
                                             <div className="relative">
@@ -1244,7 +1259,7 @@ export default function VillagerRegisterPage() {
                                                     }}
                                                     onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                                                     onKeyPress={handleKeyPress}
-                                                    className={`input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                    className={`input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 placeholder-green-600/50 text-base ${
                                                         touched.email && email && !validateEmail(email) ? 'error' : ''
                                                     }`}
                                                     placeholder={t.enterEmail}
@@ -1252,28 +1267,28 @@ export default function VillagerRegisterPage() {
                                                 />
                                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                                     {emailChecking && (
-                                                        <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                                     )}
                                                     {!emailChecking && emailValid === true && (
-                                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                                         </svg>
                                                     )}
                                                     {!emailChecking && emailValid === false && (
-                                                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                                                         </svg>
                                                     )}
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-green-600/70 mt-1">{t.emailRestriction}</p>
+                                            <p className="text-xs text-white/80 mt-1 drop-shadow">{t.emailRestriction}</p>
                                         </div>
                                     </div>
 
                                     {/* Password */}
                                     <div className="mt-4 animate-fadeIn delay-700">
-                                        <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                            <FiShield className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                        <label className="text-sm font-semibold text-white mb-2 flex items-center gap-2 drop-shadow">
+                                            <FiShield className="w-4 h-4 text-white flex-shrink-0" />
                                             <span className="truncate">{t.password}</span>
                                         </label>
                                         <div className="relative">
@@ -1283,7 +1298,7 @@ export default function VillagerRegisterPage() {
                                                 onChange={(e) => handlePasswordChange(e.target.value)}
                                                 onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
                                                 onKeyPress={handleKeyPress}
-                                                className={`input-field w-full rounded-2xl px-4 py-3 pr-12 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                className={`input-field w-full rounded-2xl px-4 py-3 pr-12 outline-none text-green-900 placeholder-green-600/50 text-base ${
                                                     touched.password && !isPasswordValid() ? 'error' : ''
                                                 }`}
                                                 placeholder={t.enterPassword}
@@ -1292,7 +1307,7 @@ export default function VillagerRegisterPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="icon-button absolute right-2 top-1/2 -translate-y-1/2 text-green-600/60 hover:text-green-700 p-2 rounded-lg"
+                                                className="icon-button absolute right-2 top-1/2 -translate-y-1/2 text-white/80 hover:text-white p-2 rounded-lg"
                                             >
                                                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
@@ -1314,36 +1329,36 @@ export default function VillagerRegisterPage() {
 
                                         {/* Password requirements */}
                                         <div className="mt-3 space-y-2">
-                                            <p className="text-xs font-semibold text-green-700">{t.passwordRequirements}</p>
+                                            <p className="text-xs font-semibold text-white drop-shadow">{t.passwordRequirements}</p>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <div className="flex items-center">
-                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasUppercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                    <span className={`text-xs ${passwordStrength.hasUppercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasUppercase ? 'bg-white' : 'bg-white/30'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasUppercase ? 'text-white font-semibold' : 'text-white/70'}`}>
                                                         {t.uppercase}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasLowercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                    <span className={`text-xs ${passwordStrength.hasLowercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasLowercase ? 'bg-white' : 'bg-white/30'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasLowercase ? 'text-white font-semibold' : 'text-white/70'}`}>
                                                         {t.lowercase}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                    <span className={`text-xs ${passwordStrength.hasNumber ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasNumber ? 'bg-white' : 'bg-white/30'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasNumber ? 'text-white font-semibold' : 'text-white/70'}`}>
                                                         {t.number}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center">
-                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasSpecialChar ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                    <span className={`text-xs ${passwordStrength.hasSpecialChar ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasSpecialChar ? 'bg-white' : 'bg-white/30'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasSpecialChar ? 'text-white font-semibold' : 'text-white/70'}`}>
                                                         {t.specialChar}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center mt-1">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasMinLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs ${passwordStrength.hasMinLength ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasMinLength ? 'bg-white' : 'bg-white/30'}`}></div>
+                                                <span className={`text-xs ${passwordStrength.hasMinLength ? 'text-white font-semibold' : 'text-white/70'}`}>
                                                     {t.minLength}
                                                 </span>
                                             </div>
@@ -1353,13 +1368,13 @@ export default function VillagerRegisterPage() {
                                     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mt-4">
                                         {/* Mobile with +91 prefix */}
                                         <div className="col-span-1 animate-fadeIn delay-800">
-                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                                <Phone className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                            <label className="text-sm font-semibold text-white mb-2 flex items-center gap-2 drop-shadow">
+                                                <Phone className="w-4 h-4 text-white flex-shrink-0" />
                                                 <span className="truncate">{t.mobile}</span>
                                             </label>
                                             <div className="relative">
                                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                                    <span className="text-green-600 font-medium text-sm sm:text-base bg-green-50 px-2 py-1.5 rounded-l-xl border-r border-green-200">
+                                                    <span className="text-green-900 font-medium text-sm sm:text-base bg-white/30 backdrop-blur-sm px-2 py-1.5 rounded-l-xl border-r border-white/30">
                                                         +91
                                                     </span>
                                                 </div>
@@ -1369,7 +1384,7 @@ export default function VillagerRegisterPage() {
                                                     onChange={(e) => handleMobileChange(e.target.value)}
                                                     onBlur={() => setTouched(prev => ({ ...prev, mobile: true }))}
                                                     onKeyPress={handleKeyPress}
-                                                    className={`input-field w-full rounded-2xl pl-16 pr-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                    className={`input-field w-full rounded-2xl pl-16 pr-4 py-3 outline-none text-green-900 placeholder-green-600/50 text-base ${
                                                         touched.mobile && mobile && !validateIndianMobile(mobile) ? 'error' : ''
                                                     }`}
                                                     placeholder={t.enterMobile}
@@ -1378,23 +1393,23 @@ export default function VillagerRegisterPage() {
                                                 />
                                             </div>
                                             {mobile && !validateIndianMobile(mobile) && touched.mobile && (
-                                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                                <p className="text-xs text-white/90 mt-1 flex items-center gap-1">
                                                     <FiAlertCircle className="w-3 h-3 flex-shrink-0" />
                                                     <span>{t.mobileInvalid}</span>
                                                 </p>
                                             )}
                                             {validateIndianMobile(mobile) && (
-                                                <p className="text-xs text-green-600 mt-1 font-semibold">
+                                                <p className="text-xs text-white mt-1 font-semibold drop-shadow">
                                                     ✓ {formatIndianMobile(mobile)}
                                                 </p>
                                             )}
-                                            <p className="text-xs text-green-900/60 mt-1">{t.mobileHint}</p>
+                                            <p className="text-xs text-white/80 mt-1 drop-shadow">{t.mobileHint}</p>
                                         </div>
 
                                         {/* Aadhaar */}
                                         <div className="col-span-1 animate-fadeIn delay-900">
-                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                                <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                            <label className="text-sm font-semibold text-white mb-2 flex items-center gap-2 drop-shadow">
+                                                <FileText className="w-4 h-4 text-white flex-shrink-0" />
                                                 <span className="truncate">{t.aadhaar}</span>
                                             </label>
                                             <input
@@ -1403,7 +1418,7 @@ export default function VillagerRegisterPage() {
                                                 onChange={(e) => handleAadhaarChange(e.target.value)}
                                                 onBlur={() => setTouched(prev => ({ ...prev, aadhaar: true }))}
                                                 onKeyPress={handleKeyPress}
-                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-600/50 text-base ${
                                                     touched.aadhaar && !validateAadhaar(aadhaar) ? 'error' : ''
                                                 }`}
                                                 placeholder={t.enterAadhaar}
@@ -1411,14 +1426,14 @@ export default function VillagerRegisterPage() {
                                                 maxLength={12}
                                                 disabled={loading}
                                             />
-                                            <p className="text-xs text-green-900/60 mt-1">{t.aadhaarNote}</p>
+                                            <p className="text-xs text-white/80 mt-1 drop-shadow">{t.aadhaarNote}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Location Information Section */}
                                 <div className="animate-fadeIn delay-1000">
-                                    <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 drop-shadow">
                                         <MapPin className="w-5 h-5 animate-float" />
                                         Location Information
                                     </h3>
@@ -1426,7 +1441,7 @@ export default function VillagerRegisterPage() {
                                     <div className="space-y-4">
                                         {/* District */}
                                         <div className="animate-fadeIn delay-1100">
-                                            <label className="text-sm font-semibold text-green-900 mb-2">
+                                            <label className="text-sm font-semibold text-white mb-2 drop-shadow">
                                                 {t.district}
                                             </label>
                                             <div className="relative">
@@ -1453,7 +1468,7 @@ export default function VillagerRegisterPage() {
 
                                         {/* Taluk */}
                                         <div className="animate-fadeIn delay-1200">
-                                            <label className="text-sm font-semibold text-green-900 mb-2">
+                                            <label className="text-sm font-semibold text-white mb-2 drop-shadow">
                                                 {t.taluk}
                                             </label>
                                             <div className="relative">
@@ -1480,7 +1495,7 @@ export default function VillagerRegisterPage() {
 
                                         {/* Village */}
                                         <div className="animate-fadeIn delay-1300">
-                                            <label className="text-sm font-semibold text-green-900 mb-2">
+                                            <label className="text-sm font-semibold text-white mb-2 drop-shadow">
                                                 {t.village}
                                             </label>
                                             <div className="relative">
@@ -1507,7 +1522,7 @@ export default function VillagerRegisterPage() {
 
                                         {/* Panchayat */}
                                         <div className="animate-fadeIn delay-1400">
-                                            <label className="text-sm font-semibold text-green-900 mb-2">
+                                            <label className="text-sm font-semibold text-white mb-2 drop-shadow">
                                                 {t.panchayat}
                                             </label>
                                             <div className="relative">
@@ -1531,7 +1546,7 @@ export default function VillagerRegisterPage() {
                                                 </div>
                                             </div>
                                             {panchayats.length === 0 && villageId && !loadingLoc && (
-                                                <p className="text-xs text-red-600 mt-2 font-semibold">
+                                                <p className="text-xs text-white/90 mt-2 font-semibold drop-shadow">
                                                     {t.noPanchayat}
                                                 </p>
                                             )}
@@ -1546,10 +1561,11 @@ export default function VillagerRegisterPage() {
                                              !validateAadhaar(aadhaar) || !validateEmail(email) || !emailValid ||
                                              !districtId || !talukId || !villageId || !panchayatId || !name.trim()}
                                     className="button-base w-full mt-8 py-4 px-6 rounded-2xl font-semibold text-white text-base sm:text-lg
-                                              bg-gradient-to-r from-green-600 to-emerald-500
-                                              hover:from-green-700 hover:to-emerald-600
+                                              bg-gradient-to-r from-green-600/80 to-emerald-500/80
+                                              hover:from-green-700/90 hover:to-emerald-600/90
+                                              backdrop-blur-sm border border-white/30
                                               shadow-md hover:shadow-lg
-                                              focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2
+                                              focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-transparent
                                               disabled:opacity-60 disabled:cursor-not-allowed
                                               flex items-center justify-center gap-2
                                               animate-fadeIn"
@@ -1571,14 +1587,14 @@ export default function VillagerRegisterPage() {
                                 {/* Mobile login option */}
                                 <div className="mt-6 sm:hidden">
                                     <div className="divider animate-fadeIn" style={{ animationDelay: '1.6s' }}>
-                                        <span>OR</span>
+                                        <span className="text-white/90">OR</span>
                                     </div>
                                     <button
                                         onClick={() => router.push(`/${locale}/villager/login`)}
-                                        className="w-full py-3 px-4 rounded-2xl border-2 border-green-200 bg-white/50
-                                                 text-green-700 font-semibold text-sm
+                                        className="w-full py-3 px-4 rounded-2xl border-2 border-white/30 bg-white/20 backdrop-blur-sm
+                                                 text-white font-semibold text-sm
                                                  flex items-center justify-center gap-2
-                                                 hover:bg-green-50 hover:border-green-300
+                                                 hover:bg-white/30 hover:border-white/50
                                                  transition-all duration-300
                                                  animate-fadeIn"
                                         style={{ animationDelay: '1.7s' }}
