@@ -1,13 +1,100 @@
-// app/[locale]/authority/ddo/reports/custom/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { auth, db } from "../../../../../lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, Timestamp } from "firebase/firestore";
 import Screen from "../../../../../components/Screen";
 import * as XLSX from "xlsx";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Define proper types
+interface Issue {
+  id: string;
+  title?: string;
+  category?: string;
+  categoryName?: string;
+  status?: string;
+  panchayatName?: string;
+  panchayat?: string;
+  gramPanchayat?: string;
+  createdAt?: Timestamp | string;
+  resolvedAt?: Timestamp | string;
+  updatedAt?: Timestamp | string;
+  closedAt?: Timestamp | string;
+  escalated?: boolean;
+  district?: string;
+  districtId?: string;
+  [key: string]: any; // Allow other properties
+}
+
+interface AuthorityData {
+  district?: string;
+  districtId?: string;
+  name?: string;
+  role?: string;
+  [key: string]: any;
+}
+
+interface DateRange {
+  startDate: string;
+  endDate: string;
+}
+
+interface GPStats {
+  total: number;
+  resolved: number;
+  escalated: number;
+  totalTime: number;
+}
+
+interface SummaryReport {
+  reportType: string;
+  generatedAt: string;
+  district: string;
+  dateRange: DateRange;
+  statistics: {
+    total: number;
+    resolved: number;
+    pending: number;
+    escalated: number;
+    resolutionRate: number;
+    escalationRate: number;
+  };
+  issues: Issue[];
+}
+
+interface DetailedReport {
+  reportType: string;
+  generatedAt: string;
+  district: string;
+  dateRange: DateRange;
+  issues: Array<{
+    id: string;
+    title?: string;
+    category?: string;
+    status?: string;
+    panchayat?: string;
+    createdAt?: string;
+    resolvedAt?: string;
+    escalated?: boolean;
+  }>;
+}
+
+interface PerformanceReport {
+  reportType: string;
+  generatedAt: string;
+  district: string;
+  dateRange: DateRange;
+  performance: Array<{
+    gramPanchayat: string;
+    totalIssues: number;
+    resolved: number;
+    escalated: number;
+    resolutionRate: number;
+    avgResolutionTime: number;
+  }>;
+}
 
 // Translations
 const translations = {
@@ -93,7 +180,7 @@ export default function CustomReportPage() {
   
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
   });
@@ -112,10 +199,19 @@ export default function CustomReportPage() {
   const loadFilters = async () => {
     try {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        router.replace(`/${locale}/authority/login`);
+        return;
+      }
 
       const authorityDoc = await getDoc(doc(db, "authorities", user.uid));
-      const district = authorityDoc.data()?.district;
+      if (!authorityDoc.exists()) {
+        router.replace(`/${locale}/authority/status`);
+        return;
+      }
+
+      const authorityData = authorityDoc.data() as AuthorityData;
+      const district = authorityData.district;
 
       if (!district) return;
 
@@ -130,8 +226,13 @@ export default function CustomReportPage() {
 
       issuesSnap.forEach(doc => {
         const data = doc.data();
-        if (data.panchayatName) gps.add(data.panchayatName);
-        if (data.category) categories.add(data.category);
+        // Try different field names for GP
+        const gpName = data.panchayatName || data.panchayat || data.gramPanchayat;
+        if (gpName) gps.add(gpName);
+        
+        // Try different field names for category
+        const category = data.categoryName || data.category || data.type;
+        if (category) categories.add(category);
       });
 
       setAvailableGPs(Array.from(gps));
@@ -163,10 +264,19 @@ export default function CustomReportPage() {
     setLoading(true);
     try {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        router.replace(`/${locale}/authority/login`);
+        return;
+      }
 
       const authorityDoc = await getDoc(doc(db, "authorities", user.uid));
-      const district = authorityDoc.data()?.district;
+      if (!authorityDoc.exists()) {
+        router.replace(`/${locale}/authority/status`);
+        return;
+      }
+
+      const authorityData = authorityDoc.data() as AuthorityData;
+      const district = authorityData.district;
 
       if (!district) return;
 
@@ -177,29 +287,47 @@ export default function CustomReportPage() {
       );
 
       const issuesSnap = await getDocs(q);
-      let issues = issuesSnap.docs.map(doc => ({
+      let issues: Issue[] = issuesSnap.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Issue[];
 
       // Apply date filter
       const start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
-      end.setHours(23, 59, 59);
+      end.setHours(23, 59, 59, 999);
 
       issues = issues.filter(issue => {
-        const issueDate = issue.createdAt?.toDate?.() || new Date(issue.createdAt);
+        // Handle createdAt which could be Timestamp, Date string, or undefined
+        let issueDate: Date;
+        if (!issue.createdAt) {
+          return false; // Skip issues without creation date
+        } else if (issue.createdAt instanceof Timestamp) {
+          issueDate = issue.createdAt.toDate();
+        } else if (typeof issue.createdAt === 'string') {
+          issueDate = new Date(issue.createdAt);
+        } else if (issue.createdAt instanceof Date) {
+          issueDate = issue.createdAt;
+        } else {
+          return false; // Unknown format
+        }
         return issueDate >= start && issueDate <= end;
       });
 
       // Apply GP filter
       if (selectedGPs.length > 0) {
-        issues = issues.filter(issue => selectedGPs.includes(issue.panchayatName));
+        issues = issues.filter(issue => {
+          const gpName = issue.panchayatName || issue.panchayat || issue.gramPanchayat;
+          return gpName ? selectedGPs.includes(gpName) : false;
+        });
       }
 
       // Apply category filter
       if (selectedCategories.length > 0) {
-        issues = issues.filter(issue => selectedCategories.includes(issue.category));
+        issues = issues.filter(issue => {
+          const category = issue.categoryName || issue.category || issue.type;
+          return category ? selectedCategories.includes(category) : false;
+        });
       }
 
       // Generate report based on type
@@ -219,12 +347,14 @@ export default function CustomReportPage() {
       }
 
       // Download based on format
+      const filename = `custom_report_${district}_${dateRange.startDate}`;
+      
       if (format === "excel") {
-        downloadExcel(reportData, district);
+        downloadExcel(reportData, filename);
       } else if (format === "csv") {
-        downloadCSV(reportData, district);
+        downloadCSV(reportData, filename);
       } else {
-        downloadJSON(reportData, district);
+        downloadJSON(reportData, filename);
       }
 
     } catch (error) {
@@ -234,11 +364,11 @@ export default function CustomReportPage() {
     }
   };
 
-  const generateSummaryReport = (issues: any[], district: string) => {
+  const generateSummaryReport = (issues: Issue[], district: string): SummaryReport => {
     const total = issues.length;
-    const resolved = issues.filter(i => i.status === "resolved").length;
-    const pending = issues.filter(i => ["pending", "in_progress"].includes(i.status)).length;
-    const escalated = issues.filter(i => i.escalated).length;
+    const resolved = issues.filter(i => i.status === "resolved" || i.status === "closed").length;
+    const pending = issues.filter(i => ["pending", "in_progress", "assigned", "verified", "submitted"].includes(i.status || "")).length;
+    const escalated = issues.filter(i => i.escalated === true).length;
 
     return {
       reportType: "Summary Report",
@@ -257,41 +387,67 @@ export default function CustomReportPage() {
     };
   };
 
-  const generateDetailedReport = (issues: any[], district: string) => {
+  const generateDetailedReport = (issues: Issue[], district: string): DetailedReport => {
     return {
       reportType: "Detailed Report",
       generatedAt: new Date().toISOString(),
       district,
       dateRange,
-      issues: issues.map(i => ({
-        id: i.id,
-        title: i.title,
-        category: i.category,
-        status: i.status,
-        panchayat: i.panchayatName,
-        createdAt: i.createdAt?.toDate?.()?.toISOString() || i.createdAt,
-        resolvedAt: i.resolvedAt?.toDate?.()?.toISOString() || i.resolvedAt,
-        escalated: i.escalated
-      }))
+      issues: issues.map(i => {
+        const getDateString = (date?: Timestamp | string | Date) => {
+          if (!date) return undefined;
+          if (date instanceof Timestamp) return date.toDate().toISOString();
+          if (date instanceof Date) return date.toISOString();
+          return date;
+        };
+
+        return {
+          id: i.id,
+          title: i.title,
+          category: i.categoryName || i.category || i.type,
+          status: i.status,
+          panchayat: i.panchayatName || i.panchayat || i.gramPanchayat,
+          createdAt: getDateString(i.createdAt),
+          resolvedAt: getDateString(i.resolvedAt),
+          escalated: i.escalated
+        };
+      })
     };
   };
 
-  const generatePerformanceReport = (issues: any[], district: string) => {
+  const generatePerformanceReport = (issues: Issue[], district: string): PerformanceReport => {
     // Group by GP
-    const gpStats: Record<string, any> = {};
+    const gpStats: Record<string, GPStats> = {};
+    
     issues.forEach(issue => {
-      const gp = issue.panchayatName || "Unknown";
+      const gp = issue.panchayatName || issue.panchayat || issue.gramPanchayat || "Unknown";
       if (!gpStats[gp]) {
         gpStats[gp] = { total: 0, resolved: 0, escalated: 0, totalTime: 0 };
       }
+      
       gpStats[gp].total++;
-      if (issue.status === "resolved") {
+      
+      if (issue.status === "resolved" || issue.status === "closed") {
         gpStats[gp].resolved++;
-        const created = issue.createdAt?.toDate?.() || new Date(issue.createdAt);
-        const resolved = issue.resolvedAt?.toDate?.() || new Date(issue.resolvedAt);
-        const days = Math.ceil((resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-        gpStats[gp].totalTime += days;
+        
+        // Calculate resolution time
+        const getDate = (date?: Timestamp | string | Date): Date | null => {
+          if (!date) return null;
+          if (date instanceof Timestamp) return date.toDate();
+          if (date instanceof Date) return date;
+          if (typeof date === 'string') return new Date(date);
+          return null;
+        };
+
+        const created = getDate(issue.createdAt);
+        const resolved = getDate(issue.resolvedAt || issue.updatedAt || issue.closedAt);
+        
+        if (created && resolved) {
+          const days = Math.ceil((resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          gpStats[gp].totalTime += days;
+        }
       }
+      
       if (issue.escalated) gpStats[gp].escalated++;
     });
 
@@ -313,31 +469,66 @@ export default function CustomReportPage() {
     };
   };
 
-  const downloadExcel = (data: any, district: string) => {
+  const downloadExcel = (data: any, filename: string) => {
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
+    
+    // Convert data to appropriate format for Excel
+    let worksheetData;
+    if (data.performance) {
+      // Performance report
+      worksheetData = data.performance;
+    } else if (data.issues) {
+      // Detailed or summary report
+      worksheetData = data.issues;
+    } else {
+      worksheetData = [data];
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(worksheetData);
     XLSX.utils.book_append_sheet(wb, ws, "Report");
-    XLSX.writeFile(wb, `custom_report_${district}_${dateRange.startDate}.xlsx`);
+    
+    // Add metadata sheet
+    const metadata = [
+      ["Report Type", data.reportType || "Custom Report"],
+      ["Generated At", data.generatedAt || new Date().toISOString()],
+      ["District", data.district || "Unknown"],
+      ["Date Range", `${data.dateRange?.startDate} to ${data.dateRange?.endDate}`],
+      ["Total Records", worksheetData.length]
+    ];
+    const ws_meta = XLSX.utils.aoa_to_sheet(metadata);
+    XLSX.utils.book_append_sheet(wb, ws_meta, "Metadata");
+    
+    XLSX.writeFile(wb, `${filename}.xlsx`);
   };
 
-  const downloadCSV = (data: any, district: string) => {
-    const ws = XLSX.utils.json_to_sheet(Array.isArray(data) ? data : [data]);
+  const downloadCSV = (data: any, filename: string) => {
+    // Flatten data for CSV
+    let flatData;
+    if (data.performance) {
+      flatData = data.performance;
+    } else if (data.issues) {
+      flatData = data.issues;
+    } else {
+      flatData = [data];
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(flatData);
     const csv = XLSX.utils.sheet_to_csv(ws);
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `custom_report_${district}_${dateRange.startDate}.csv`;
+    a.download = `${filename}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const downloadJSON = (data: any, district: string) => {
+  const downloadJSON = (data: any, filename: string) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `custom_report_${district}_${dateRange.startDate}.json`;
+    a.download = `${filename}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
