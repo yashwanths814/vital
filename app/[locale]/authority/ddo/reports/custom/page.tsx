@@ -14,6 +14,7 @@ interface Issue {
   title?: string;
   category?: string;
   categoryName?: string;
+  type?: string;
   status?: string;
   panchayatName?: string;
   panchayat?: string;
@@ -172,6 +173,27 @@ const translations = {
   }
 };
 
+// Helper function to safely convert any date type to Date object
+const toDate = (dateValue: Timestamp | string | undefined): Date | null => {
+  if (!dateValue) return null;
+  
+  if (dateValue instanceof Timestamp) {
+    return dateValue.toDate();
+  }
+  
+  if (typeof dateValue === 'string') {
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  // If it's already a Date object (though not in our type)
+  if (dateValue instanceof Date) {
+    return dateValue;
+  }
+  
+  return null;
+};
+
 export default function CustomReportPage() {
   const router = useRouter();
   const params = useParams() as { locale?: string };
@@ -298,19 +320,8 @@ export default function CustomReportPage() {
       end.setHours(23, 59, 59, 999);
 
       issues = issues.filter(issue => {
-        // Handle createdAt which could be Timestamp, Date string, or undefined
-        let issueDate: Date;
-        if (!issue.createdAt) {
-          return false; // Skip issues without creation date
-        } else if (issue.createdAt instanceof Timestamp) {
-          issueDate = issue.createdAt.toDate();
-        } else if (typeof issue.createdAt === 'string') {
-          issueDate = new Date(issue.createdAt);
-        } else if (issue.createdAt instanceof Date) {
-          issueDate = issue.createdAt;
-        } else {
-          return false; // Unknown format
-        }
+        const issueDate = toDate(issue.createdAt);
+        if (!issueDate) return false;
         return issueDate >= start && issueDate <= end;
       });
 
@@ -394,11 +405,9 @@ export default function CustomReportPage() {
       district,
       dateRange,
       issues: issues.map(i => {
-        const getDateString = (date?: Timestamp | string | Date) => {
-          if (!date) return undefined;
-          if (date instanceof Timestamp) return date.toDate().toISOString();
-          if (date instanceof Date) return date.toISOString();
-          return date;
+        const getDateString = (date?: Timestamp | string) => {
+          const dateObj = toDate(date);
+          return dateObj ? dateObj.toISOString() : undefined;
         };
 
         return {
@@ -408,7 +417,7 @@ export default function CustomReportPage() {
           status: i.status,
           panchayat: i.panchayatName || i.panchayat || i.gramPanchayat,
           createdAt: getDateString(i.createdAt),
-          resolvedAt: getDateString(i.resolvedAt),
+          resolvedAt: getDateString(i.resolvedAt || i.updatedAt || i.closedAt),
           escalated: i.escalated
         };
       })
@@ -431,16 +440,8 @@ export default function CustomReportPage() {
         gpStats[gp].resolved++;
         
         // Calculate resolution time
-        const getDate = (date?: Timestamp | string | Date): Date | null => {
-          if (!date) return null;
-          if (date instanceof Timestamp) return date.toDate();
-          if (date instanceof Date) return date;
-          if (typeof date === 'string') return new Date(date);
-          return null;
-        };
-
-        const created = getDate(issue.createdAt);
-        const resolved = getDate(issue.resolvedAt || issue.updatedAt || issue.closedAt);
+        const created = toDate(issue.createdAt);
+        const resolved = toDate(issue.resolvedAt || issue.updatedAt || issue.closedAt);
         
         if (created && resolved) {
           const days = Math.ceil((resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
