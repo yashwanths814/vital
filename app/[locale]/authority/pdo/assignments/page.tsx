@@ -1,4 +1,3 @@
-// app/[locale]/authority/pdo/assignments/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -98,7 +97,7 @@ export default function PdoAssignmentsPage() {
                 refresh: "Refresh",
                 noWorkers: "No workers available",
                 noIssues: "No pending issues to assign",
-                workers: "Available Workers",
+                availableWorkers: "Available Workers",
                 pendingIssues: "Pending Issues",
                 assignedIssues: "Assigned Issues",
                 selectWorker: "Select a worker",
@@ -156,7 +155,7 @@ export default function PdoAssignmentsPage() {
                 refresh: "ರಿಫ್ರೆಶ್",
                 noWorkers: "ಯಾವುದೇ ಕೆಲಸಗಾರರು ಲಭ್ಯವಿಲ್ಲ",
                 noIssues: "ನಿಯೋಜಿಸಲು ಯಾವುದೇ ಬಾಕಿ ಸಮಸ್ಯೆಗಳಿಲ್ಲ",
-                workers: "ಲಭ್ಯವಿರುವ ಕೆಲಸಗಾರರು",
+                availableWorkers: "ಲಭ್ಯವಿರುವ ಕೆಲಸಗಾರರು",
                 pendingIssues: "ಬಾಕಿ ಇರುವ ಸಮಸ್ಯೆಗಳು",
                 assignedIssues: "ನಿಯೋಜಿತ ಸಮಸ್ಯೆಗಳು",
                 selectWorker: "ಕೆಲಸಗಾರರನ್ನು ಆಯ್ಕೆಮಾಡಿ",
@@ -214,7 +213,7 @@ export default function PdoAssignmentsPage() {
                 refresh: "रिफ्रेश",
                 noWorkers: "कोई कार्यकर्ता उपलब्ध नहीं है",
                 noIssues: "असाइन करने के लिए कोई लंबित मुद्दे नहीं हैं",
-                workers: "उपलब्ध कार्यकर्ता",
+                availableWorkers: "उपलब्ध कार्यकर्ता",
                 pendingIssues: "लंबित मुद्दे",
                 assignedIssues: "असाइन किए गए मुद्दे",
                 selectWorker: "कार्यकर्ता चुनें",
@@ -668,7 +667,7 @@ export default function PdoAssignmentsPage() {
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-bold text-purple-900 flex items-center gap-2">
                                 <FiUsers className="w-5 h-5" />
-                                {t.workers} ({filteredWorkers.length})
+                                {t.availableWorkers} ({filteredWorkers.length})
                             </h2>
                             <div className="flex gap-2">
                                 <select
