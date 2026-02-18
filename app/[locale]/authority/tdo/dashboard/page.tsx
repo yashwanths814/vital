@@ -1,4 +1,3 @@
-// app/[locale]/authority/tdo/dashboard/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -44,6 +43,7 @@ import {
     FiBell,
     FiEye,
     FiStar,
+    FiInfo,  // Added missing import
 } from "react-icons/fi";
 
 type FundReq = {
