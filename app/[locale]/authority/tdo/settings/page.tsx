@@ -349,4 +349,71 @@ export default function TdoSettingsPage() {
                                 <span className="text-gray-700">{t.twoFactor}</span>
                                 <input
                                     type="checkbox"
-                                    checked={
+                                    checked={settings.twoFactorEnabled}
+                                    onChange={(e) => setSettings({...settings, twoFactorEnabled: e.target.checked})}
+                                    className="w-5 h-5 text-blue-600 rounded"
+                                />
+                            </label>
+                            <div>
+                                <label className="block text-gray-700 mb-2">{t.sessionTimeout}</label>
+                                <select
+                                    value={settings.sessionTimeout}
+                                    onChange={(e) => setSettings({...settings, sessionTimeout: parseInt(e.target.value)})}
+                                    className="w-full p-2 border-2 border-blue-100 rounded-xl"
+                                >
+                                    <option value="15">15 {t.minutes}</option>
+                                    <option value="30">30 {t.minutes}</option>
+                                    <option value="60">60 {t.minutes}</option>
+                                    <option value="120">120 {t.minutes}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Appearance */}
+                    <div className="bg-white border-2 border-blue-100 rounded-2xl p-5">
+                        <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+                            {settings.darkMode ? <FiMoon className="w-5 h-5" /> : <FiSun className="w-5 h-5" />}
+                            {t.appearance}
+                        </h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-gray-700 mb-2">{t.language}</label>
+                                <select
+                                    value={settings.language}
+                                    onChange={(e) => setSettings({...settings, language: e.target.value})}
+                                    className="w-full p-2 border-2 border-blue-100 rounded-xl"
+                                >
+                                    <option value="en">{t.languageOptions.en}</option>
+                                    <option value="hi">{t.languageOptions.hi}</option>
+                                    <option value="kn">{t.languageOptions.kn}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-gray-700 mb-2">{t.fontSize}</label>
+                                <select
+                                    value={settings.fontSize}
+                                    onChange={(e) => setSettings({...settings, fontSize: e.target.value as any})}
+                                    className="w-full p-2 border-2 border-blue-100 rounded-xl"
+                                >
+                                    <option value="small">{t.small}</option>
+                                    <option value="medium">{t.medium}</option>
+                                    <option value="large">{t.large}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Logout Button */}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-red-600 hover:to-red-700 transition-all"
+                    >
+                        <FiLogOut className="w-5 h-5" />
+                        {t.logout}
+                    </button>
+                </div>
+            </div>
+        </Screen>
+    );
+}
