@@ -15,8 +15,8 @@ import {
     addDoc,
     serverTimestamp
 } from "firebase/firestore";
-import { auth, db } from "../../../../../lib/firebase";
-import Screen from "../../../../../components/Screen";
+import { auth, db } from "../../../../lib/firebase";
+import Screen from "../../../../components/Screen";
 import {
     FiArrowLeft,
     FiUser,
