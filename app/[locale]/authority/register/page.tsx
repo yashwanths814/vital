@@ -1,113 +1,89 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Screen from "../../../components/Screen";
-import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import {
     collection,
+    doc,
     getDocs,
     orderBy,
     query,
-    where,
-    addDoc,
+    serverTimestamp,
     setDoc,
-    doc,
-    serverTimestamp
+    where,
+    limit,
 } from "firebase/firestore";
-import { Eye, EyeOff, MapPin, Building2, User, Shield, Mail, Phone, FileText, Home, LogIn } from "lucide-react";
-import { FiAlertCircle } from "react-icons/fi";
+import { Eye, EyeOff, MapPin, User, Mail, Phone, FileText, Home, LogIn } from "lucide-react";
+import { FiAlertCircle, FiShield } from "react-icons/fi";
 
-type Role = "pdo" | "village_incharge" | "tdo" | "ddo";
 type Locale = "en" | "kn" | "hi";
 
-type District = {
-    id?: string;
-    name: string;
-    code?: string;
+type District = { 
+    id: string; 
+    name: string; 
+    code?: string; 
     state?: string;
     isActive?: boolean;
-    createdBy?: string;
-    createdAt?: any;
 };
 
-type Taluk = {
-    id?: string;
-    name: string;
+type Taluk = { 
+    id: string; 
+    name: string; 
     districtId: string;
     districtName: string;
     isActive?: boolean;
-    createdBy?: string;
-    createdAt?: any;
 };
 
 type Village = {
-    id?: string;
+    id: string;
     name: string;
     districtId: string;
     districtName: string;
     talukId: string;
     talukName: string;
     isActive?: boolean;
-    createdBy?: string;
-    createdAt?: any;
 };
 
 type Panchayat = {
-    id?: string;
+    id: string;
     name: string;
-    villageId: string;
-    villageName: string;
-    talukId: string;
-    talukName: string;
+    code?: string;
     districtId: string;
-    districtName: string;
-    gramPanchayatId?: string;
+    talukId: string;
+    villageId?: string;
+    villageName?: string;
     isActive?: boolean;
-    createdBy?: string;
-    createdAt?: any;
 };
 
 // Indian mobile number validation
 const validateIndianMobile = (phone: string): boolean => {
-    // Remove all non-digits
     const cleaned = phone.replace(/\D/g, '');
-
-    // Check if it's a valid Indian mobile number
-    // Indian mobile numbers: 10 digits starting with 6,7,8,9
-    // With or without +91 or 0 prefix
     if (cleaned.length === 10) {
         return /^[6-9]\d{9}$/.test(cleaned);
     } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-        // With leading 0 (01123456789)
         return /^0[6-9]\d{9}$/.test(cleaned);
     } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
-        // With 91 prefix (911234567890)
         return /^91[6-9]\d{9}$/.test(cleaned);
     }
     return false;
 };
 
 const formatIndianMobile = (phone: string): string => {
-    // Remove all non-digits
     const cleaned = phone.replace(/\D/g, '');
-
-    // Format based on length
     if (cleaned.length === 10) {
-        // Format as +91 XXXXX XXXXX
         return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
     } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
-        // Already has country code
         return `+91 ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`;
     } else if (cleaned.length === 11 && cleaned.startsWith('0')) {
-        // Has leading zero
         return `+91 ${cleaned.slice(1, 6)} ${cleaned.slice(6)}`;
     }
     return phone;
 };
 
-export default function AuthorityRegisterPage() {
+export default function VillagerRegisterPage() {
     const router = useRouter();
     const params = useParams() as { locale?: string };
     const locale = (params?.locale || "en") as Locale;
@@ -115,9 +91,8 @@ export default function AuthorityRegisterPage() {
     const t = useMemo(() => {
         const L: any = {
             en: {
-                title: "Authority Registration",
-                subtitle: "Register as a government authority (Admin verification required)",
-                role: "Select Role *",
+                title: "Villager Registration",
+                subtitle: "Register and wait for Village In-charge verification",
                 fullName: "Full Name *",
                 email: "Email *",
                 password: "Password *",
@@ -126,49 +101,47 @@ export default function AuthorityRegisterPage() {
                 mobileFormat: "Format: +91 XXXXX XXXXX",
                 mobileInvalid: "Please enter a valid Indian mobile number (10 digits starting with 6-9)",
                 aadhaar: "Aadhaar Number *",
-                officeAddress: "Office Address *",
+                aadhaarNote: "Stored as full 12 digits (only last 4 visible to authorities)",
                 district: "District *",
-                taluk: "Taluk/Block *",
+                taluk: "Taluk *",
                 village: "Village *",
                 panchayat: "Panchayat *",
-                gramPanchayatId: "Gram Panchayat ID *",
-                register: "Register as Authority",
+                register: "Register as Villager",
                 creating: "Creating Account...",
-                cantFind: "Can't find your {item}? Enter manually",
-                newEntry: "You're entering a new {item}. This will be saved in the database.",
-                aadhaarNote: "Stored as full 12 digits (only last 4 visible to admin)",
-                gramNote: "Enter the official Gram Panchayat ID",
                 passwordRequirements: "Password Requirements",
                 uppercase: "At least one uppercase letter (A-Z)",
                 lowercase: "At least one lowercase letter (a-z)",
                 number: "At least one number (0-9)",
                 specialChar: "At least one special character (!@#$%^&* etc.)",
                 minLength: "At least 8 characters long",
-                govService: "Government Service Registration",
-                joinAuthority: "Join as a verified authority",
-                noPanchayat: "No panchayats found for this village. Contact your village authority or choose a different village.",
                 selectDistrict: "Select District",
                 selectTaluk: "Select Taluk",
                 selectVillage: "Select Village",
                 selectPanchayat: "Select Panchayat",
-                enterDistrict: "Enter district name (e.g., Bangalore Urban)",
-                enterTaluk: "Enter taluk name",
-                enterVillage: "Enter village name",
-                enterPanchayat: "Enter panchayat name",
                 enterFullName: "Enter your full name",
-                enterEmail: "official@example.com",
+                enterEmail: "your.email@example.com",
                 enterPassword: "Enter a valid password",
                 enterMobile: "98765 43210",
                 enterAadhaar: "12-digit Aadhaar",
-                enterOfficeAddress: "Enter complete office address",
-                enterGramPanchayatId: "Enter official Gram Panchayat ID",
                 alreadyRegistered: "Already registered?",
                 loginHere: "Login here",
+                noPanchayat: "No panchayats found for this village. Please contact your village authority.",
+                emailRestriction: "Only Gmail, Outlook, Yahoo, and government emails are allowed",
+                errors: {
+                    name: "Name is required",
+                    email: "Please enter a valid email address",
+                    emailDomain: "Only Gmail, Outlook, Yahoo, and government emails are allowed",
+                    emailExists: "This email is already registered",
+                    password: "Please enter a valid password meeting all requirements",
+                    mobile: "Please enter a valid 10-digit Indian mobile number",
+                    aadhaar: "Aadhaar must be exactly 12 digits",
+                    selectLocation: "Please select all location fields",
+                    loadLoc: "Failed to load location data",
+                },
             },
             kn: {
-                title: "ಅಧಿಕಾರಿ ನೋಂದಣಿ",
-                subtitle: "ಸರ್ಕಾರಿ ಅಧಿಕಾರಿಯಾಗಿ ನೋಂದಾಯಿಸಿ (ನಿರ್ವಾಹಕ ಪರಿಶೀಲನೆ ಅಗತ್ಯ)",
-                role: "ಪಾತ್ರ ಆಯ್ಕೆಮಾಡಿ *",
+                title: "ಗ್ರಾಮಸ್ಥ ನೋಂದಣಿ",
+                subtitle: "ನೋಂದಣಿ ಮಾಡಿ ಮತ್ತು ಗ್ರಾಮ ಇಂಚಾರ್ಜ್ ಪರಿಶೀಲನೆಗಾಗಿ ಕಾಯಿರಿ",
                 fullName: "ಪೂರ್ಣ ಹೆಸರು *",
                 email: "ಇಮೇಲ್ *",
                 password: "ಪಾಸ್‌ವರ್ಡ್ *",
@@ -177,49 +150,47 @@ export default function AuthorityRegisterPage() {
                 mobileFormat: "ಸ್ವರೂಪ: +91 XXXXX XXXXX",
                 mobileInvalid: "ದಯವಿಟ್ಟು ಮಾನ್ಯ ಭಾರತೀಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ (6-9 ರಿಂದ ಆರಂಭವಾಗುವ 10 ಅಂಕೆಗಳು)",
                 aadhaar: "ಆಧಾರ್ ಸಂಖ್ಯೆ *",
-                officeAddress: "ಕಚೇರಿ ವಿಳಾಸ *",
+                aadhaarNote: "ಪೂರ್ಣ 12 ಅಂಕಿಗಳಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ (ಕೊನೆಯ 4 ಮಾತ್ರ ಅಧಿಕಾರಿಗಳಿಗೆ ಗೋಚರಿಸುತ್ತದೆ)",
                 district: "ಜಿಲ್ಲೆ *",
-                taluk: "ತಾಲ್ಲೂಕು/ಬ್ಲಾಕ್ *",
+                taluk: "ತಾಲೂಕು *",
                 village: "ಗ್ರಾಮ *",
-                panchayat: "ಪಂಚಾಯಿತಿ *",
-                gramPanchayatId: "ಗ್ರಾಮ ಪಂಚಾಯಿತಿ ಐಡಿ *",
-                register: "ಅಧಿಕಾರಿಯಾಗಿ ನೋಂದಾಯಿಸಿ",
+                panchayat: "ಪಂಚಾಯತ್ *",
+                register: "ಗ್ರಾಮಸ್ಥರಾಗಿ ನೋಂದಣಿ",
                 creating: "ಖಾತೆಯನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ...",
-                cantFind: "ನಿಮ್ಮ {item} ಕಂಡುಬಂದಿಲ್ಲವೇ? ಕೈಮಾರ್ಗದಿಂದ ನಮೂದಿಸಿ",
-                newEntry: "ನೀವು ಹೊಸ {item} ನಮೂದಿಸುತ್ತಿದ್ದೀರಿ. ಇದನ್ನು ಡೇಟಾಬೇಸ್‌ನಲ್ಲಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ.",
-                aadhaarNote: "ಪೂರ್ಣ 12 ಅಂಕಿಗಳಾಗಿ ಸಂಗ್ರಹಿಸಲಾಗುತ್ತದೆ (ನಿರ್ವಾಹಕರಿಗೆ ಕೊನೆಯ 4 ಮಾತ್ರ ಗೋಚರಿಸುತ್ತದೆ)",
-                gramNote: "ಅಧಿಕೃತ ಗ್ರಾಮ ಪಂಚಾಯಿತಿ ಐಡಿಯನ್ನು ನಮೂದಿಸಿ",
                 passwordRequirements: "ಪಾಸ್‌ವರ್ಡ್ ಅವಶ್ಯಕತೆಗಳು",
                 uppercase: "ಕನಿಷ್ಠ ಒಂದು ದೊಡ್ಡ ಅಕ್ಷರ (A-Z)",
                 lowercase: "ಕನಿಷ್ಠ ಒಂದು ಸಣ್ಣ ಅಕ್ಷರ (a-z)",
                 number: "ಕನಿಷ್ಠ ಒಂದು ಸಂಖ್ಯೆ (0-9)",
                 specialChar: "ಕನಿಷ್ಠ ಒಂದು ವಿಶೇಷ ಅಕ್ಷರ (!@#$%^&* ಇತ್ಯಾದಿ)",
                 minLength: "ಕನಿಷ್ಠ 8 ಅಕ್ಷರಗಳು",
-                govService: "ಸರ್ಕಾರಿ ಸೇವೆ ನೋಂದಣಿ",
-                joinAuthority: "ಪರಿಶೀಲಿತ ಅಧಿಕಾರಿಯಾಗಿ ಸೇರಿಕೊಳ್ಳಿ",
-                noPanchayat: "ಈ ಗ್ರಾಮಕ್ಕೆ ಪಂಚಾಯಿತಿಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಗ್ರಾಮ ಅಧಿಕಾರಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ ಅಥವಾ ಬೇರೆ ಗ್ರಾಮವನ್ನು ಆರಿಸಿ.",
                 selectDistrict: "ಜಿಲ್ಲೆ ಆಯ್ಕೆಮಾಡಿ",
-                selectTaluk: "ತಾಲ್ಲೂಕು ಆಯ್ಕೆಮಾಡಿ",
+                selectTaluk: "ತಾಲೂಕು ಆಯ್ಕೆಮಾಡಿ",
                 selectVillage: "ಗ್ರಾಮ ಆಯ್ಕೆಮಾಡಿ",
-                selectPanchayat: "ಪಂಚಾಯಿತಿ ಆಯ್ಕೆಮಾಡಿ",
-                enterDistrict: "ಜಿಲ್ಲೆಯ ಹೆಸರು ನಮೂದಿಸಿ (ಉದಾ: ಬೆಂಗಳೂರು ನಗರ)",
-                enterTaluk: "ತಾಲ್ಲೂಕು ಹೆಸರು ನಮೂದಿಸಿ",
-                enterVillage: "ಗ್ರಾಮದ ಹೆಸರು ನಮೂದಿಸಿ",
-                enterPanchayat: "ಪಂಚಾಯಿತಿ ಹೆಸರು ನಮೂದಿಸಿ",
+                selectPanchayat: "ಪಂಚಾಯತ್ ಆಯ್ಕೆಮಾಡಿ",
                 enterFullName: "ನಿಮ್ಮ ಪೂರ್ಣ ಹೆಸರು ನಮೂದಿಸಿ",
-                enterEmail: "official@example.com",
+                enterEmail: "ನಿಮ್ಮ ಇಮೇಲ್@ಉದಾಹರಣೆ.ಕಾಂ",
                 enterPassword: "ಮಾನ್ಯ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ",
                 enterMobile: "98765 43210",
                 enterAadhaar: "12-ಅಂಕಿಯ ಆಧಾರ್",
-                enterOfficeAddress: "ಸಂಪೂರ್ಣ ಕಚೇರಿ ವಿಳಾಸ ನಮೂದಿಸಿ",
-                enterGramPanchayatId: "ಅಧಿಕೃತ ಗ್ರಾಮ ಪಂಚಾಯಿತಿ ಐಡಿ ನಮೂದಿಸಿ",
                 alreadyRegistered: "ಈಗಾಗಲೇ ನೋಂದಾಯಿಸಿದ್ದೀರಾ?",
                 loginHere: "ಇಲ್ಲಿ ಲಾಗಿನ್ ಮಾಡಿ",
+                noPanchayat: "ಈ ಗ್ರಾಮಕ್ಕೆ ಪಂಚಾಯತ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಗ್ರಾಮ ಅಧಿಕಾರಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+                emailRestriction: "Gmail, Outlook, Yahoo ಮತ್ತು ಸರ್ಕಾರಿ ಇಮೇಲ್‌ಗಳನ್ನು ಮಾತ್ರ ಅನುಮತಿಸಲಾಗಿದೆ",
+                errors: {
+                    name: "ಹೆಸರು ಅಗತ್ಯವಿದೆ",
+                    email: "ದಯವಿಟ್ಟು ಮಾನ್ಯ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ",
+                    emailDomain: "Gmail, Outlook, Yahoo ಮತ್ತು ಸರ್ಕಾರಿ ಇಮೇಲ್‌ಗಳನ್ನು ಮಾತ್ರ ಅನುಮತಿಸಲಾಗಿದೆ",
+                    emailExists: "ಈ ಇಮೇಲ್ ಈಗಾಗಲೇ ನೋಂದಾಯಿಸಲಾಗಿದೆ",
+                    password: "ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಅವಶ್ಯಕತೆಗಳನ್ನು ಪೂರೈಸುವ ಮಾನ್ಯ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ",
+                    mobile: "ದಯವಿಟ್ಟು ಮಾನ್ಯ 10-ಅಂಕಿಯ ಭಾರತೀಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ",
+                    aadhaar: "ಆಧಾರ್ ನಿಖರವಾಗಿ 12 ಅಂಕೆಗಳಾಗಿರಬೇಕು",
+                    selectLocation: "ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಸ್ಥಳ ಕ್ಷೇತ್ರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+                    loadLoc: "ಸ್ಥಳ ಡೇಟಾವನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ",
+                },
             },
             hi: {
-                title: "प्राधिकारी पंजीकरण",
-                subtitle: "सरकारी प्राधिकारी के रूप में पंजीकरण करें (प्रशासक सत्यापन आवश्यक)",
-                role: "भूमिका चुनें *",
+                title: "ग्रामीण पंजीकरण",
+                subtitle: "रजिस्टर करें और ग्राम इंचार्ज सत्यापन की प्रतीक्षा करें",
                 fullName: "पूरा नाम *",
                 email: "ईमेल *",
                 password: "पासवर्ड *",
@@ -228,72 +199,87 @@ export default function AuthorityRegisterPage() {
                 mobileFormat: "प्रारूप: +91 XXXXX XXXXX",
                 mobileInvalid: "कृपया एक वैध भारतीय मोबाइल नंबर दर्ज करें (6-9 से शुरू होने वाले 10 अंक)",
                 aadhaar: "आधार नंबर *",
-                officeAddress: "कार्यालय का पता *",
+                aadhaarNote: "पूर्ण 12 अंकों के रूप में संग्रहीत (केवल अंतिम 4 अधिकारियों को दिखाई देते हैं)",
                 district: "जिला *",
-                taluk: "तालुका/ब्लॉक *",
+                taluk: "तालुक *",
                 village: "गांव *",
                 panchayat: "पंचायत *",
-                gramPanchayatId: "ग्राम पंचायत आईडी *",
-                register: "प्राधिकारी के रूप में पंजीकरण करें",
+                register: "ग्रामीण के रूप में पंजीकरण",
                 creating: "खाता बनाया जा रहा है...",
-                cantFind: "आपका {item} नहीं मिल रहा है? मैन्युअल रूप से दर्ज करें",
-                newEntry: "आप एक नया {item} दर्ज कर रहे हैं। इसे डेटाबेस में सहेजा जाएगा।",
-                aadhaarNote: "पूर्ण 12 अंकों के रूप में संग्रहीत (प्रशासक को केवल अंतिम 4 दिखाई देते हैं)",
-                gramNote: "आधिकारिक ग्राम पंचायत आईडी दर्ज करें",
                 passwordRequirements: "पासवर्ड आवश्यकताएं",
                 uppercase: "कम से कम एक बड़ा अक्षर (A-Z)",
                 lowercase: "कम से कम एक छोटा अक्षर (a-z)",
                 number: "कम से कम एक संख्या (0-9)",
                 specialChar: "कम से कम एक विशेष वर्ण (!@#$%^&* आदि)",
                 minLength: "कम से कम 8 अक्षर लंबा",
-                govService: "सरकारी सेवा पंजीकरण",
-                joinAuthority: "सत्यापित प्राधिकारी के रूप में शामिल हों",
-                noPanchayat: "इस गांव के लिए कोई पंचायत नहीं मिली। कृपया अपने गांव के अधिकारी से संपर्क करें या कोई अन्य गांव चुनें।",
                 selectDistrict: "जिला चुनें",
-                selectTaluk: "तालुका चुनें",
+                selectTaluk: "तालुक चुनें",
                 selectVillage: "गांव चुनें",
                 selectPanchayat: "पंचायत चुनें",
-                enterDistrict: "जिले का नाम दर्ज करें (जैसे: बेंगलुरु शहरी)",
-                enterTaluk: "तालुका का नाम दर्ज करें",
-                enterVillage: "गांव का नाम दर्ज करें",
-                enterPanchayat: "पंचायत का नाम दर्ज करें",
                 enterFullName: "अपना पूरा नाम दर्ज करें",
-                enterEmail: "official@example.com",
+                enterEmail: "आपका.ईमेल@उदाहरण.कॉम",
                 enterPassword: "मान्य पासवर्ड दर्ज करें",
                 enterMobile: "98765 43210",
                 enterAadhaar: "12-अंकीय आधार",
-                enterOfficeAddress: "पूरा कार्यालय पता दर्ज करें",
-                enterGramPanchayatId: "आधिकारिक ग्राम पंचायत आईडी दर्ज करें",
                 alreadyRegistered: "पहले से पंजीकृत हैं?",
                 loginHere: "यहाँ लॉगिन करें",
+                noPanchayat: "इस गांव के लिए कोई पंचायत नहीं मिली। कृपया अपने गांव के अधिकारी से संपर्क करें।",
+                emailRestriction: "केवल Gmail, Outlook, Yahoo और सरकारी ईमेल की अनुमति है",
+                errors: {
+                    name: "नाम आवश्यक है",
+                    email: "कृपया मान्य ईमेल पता दर्ज करें",
+                    emailDomain: "केवल Gmail, Outlook, Yahoo और सरकारी ईमेल की अनुमति है",
+                    emailExists: "यह ईमेल पहले से पंजीकृत है",
+                    password: "कृपया सभी आवश्यकताओं को पूरा करने वाला मान्य पासवर्ड दर्ज करें",
+                    mobile: "कृपया मान्य 10-अंकीय भारतीय मोबाइल नंबर दर्ज करें",
+                    aadhaar: "आधार ठीक 12 अंकों का होना चाहिए",
+                    selectLocation: "कृपया सभी स्थान फ़ील्ड चुनें",
+                    loadLoc: "स्थान डेटा लोड करने में विफल",
+                },
             },
         };
         return L[locale] || L.en;
     }, [locale]);
 
-    const ROLES: { id: Role; label: string }[] = useMemo(
-        () => [
-            { id: "pdo", label: "Panchayat Development Officer (PDO)" },
-            { id: "village_incharge", label: "Village Incharge" },
-            { id: "tdo", label: "Taluk Development Officer" },
-            { id: "ddo", label: "District Development Officer" },
-        ],
-        []
-    );
-
-    const [role, setRole] = useState<Role>("pdo");
-
-    // Auth
+    // Form state
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [passwordStrength, setPasswordStrength] = useState<{
-        hasUppercase: boolean;
-        hasLowercase: boolean;
-        hasNumber: boolean;
-        hasSpecialChar: boolean;
-        hasMinLength: boolean;
-    }>({
+    const [mobile, setMobile] = useState("");
+    const [aadhaar, setAadhaar] = useState("");
+
+    // Location state
+    const [districtId, setDistrictId] = useState("");
+    const [talukId, setTalukId] = useState("");
+    const [villageId, setVillageId] = useState("");
+    const [panchayatId, setPanchayatId] = useState("");
+
+    // Lists
+    const [districts, setDistricts] = useState<District[]>([]);
+    const [taluks, setTaluks] = useState<Taluk[]>([]);
+    const [villages, setVillages] = useState<Village[]>([]);
+    const [panchayats, setPanchayats] = useState<Panchayat[]>([]);
+
+    // UI state
+    const [loadingLoc, setLoadingLoc] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [err, setErr] = useState("");
+    const [success, setSuccess] = useState(false);
+
+    // Validation states
+    const [emailValid, setEmailValid] = useState<boolean | null>(null);
+    const [emailChecking, setEmailChecking] = useState(false);
+    const [touched, setTouched] = useState({
+        name: false,
+        email: false,
+        password: false,
+        mobile: false,
+        aadhaar: false,
+    });
+
+    // Password strength
+    const [passwordStrength, setPasswordStrength] = useState({
         hasUppercase: false,
         hasLowercase: false,
         hasNumber: false,
@@ -301,109 +287,89 @@ export default function AuthorityRegisterPage() {
         hasMinLength: false
     });
 
-    // Common
-    const [name, setName] = useState("");
-    const [mobile, setMobile] = useState("");
-    const [aadhaar, setAadhaar] = useState("");
-    const [officeAddress, setOfficeAddress] = useState("");
-    const [gramPanchayatId, setGramPanchayatId] = useState("");
+    // Allowed email domains
+    const allowedDomains = [
+        'gmail.com', 
+        'outlook.com', 
+        'hotmail.com', 
+        'yahoo.com', 
+        'yahoo.co.in',
+        'gov.in',
+        'nic.in',
+        'karnataka.gov.in'
+    ];
 
-    // Location data
-    const [districts, setDistricts] = useState<District[]>([]);
-    const [taluks, setTaluks] = useState<Taluk[]>([]);
-    const [villages, setVillages] = useState<Village[]>([]);
-    const [panchayats, setPanchayats] = useState<Panchayat[]>([]);
+    // Validate email with domain restriction
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return false;
+        
+        const domain = email.split('@')[1].toLowerCase();
+        return allowedDomains.some(allowed => domain === allowed || domain.endsWith('.' + allowed));
+    };
 
-    // Manual entry states
-    const [newDistrict, setNewDistrict] = useState("");
-    const [newTaluk, setNewTaluk] = useState("");
-    const [newVillage, setNewVillage] = useState("");
-    const [newPanchayat, setNewPanchayat] = useState("");
-
-    // Selected dropdown values
-    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-    const [selectedTaluk, setSelectedTaluk] = useState<string>("");
-    const [selectedVillage, setSelectedVillage] = useState<string>("");
-    const [selectedPanchayat, setSelectedPanchayat] = useState<string>("");
-
-    // Modes
-    const [useManualDistrict, setUseManualDistrict] = useState(false);
-    const [useManualTaluk, setUseManualTaluk] = useState(false);
-    const [useManualVillage, setUseManualVillage] = useState(false);
-    const [useManualPanchayat, setUseManualPanchayat] = useState(false);
-
-    // UI states
-    const [loading, setLoading] = useState(false);
-    const [loadingLoc, setLoadingLoc] = useState(false);
-    const [err, setErr] = useState("");
-
-    // Validation states
-    const [touched, setTouched] = useState({
-        name: false,
-        email: false,
-        password: false,
-        mobile: false,
-        aadhaar: false,
-        officeAddress: false
-    });
-
-    const needsTaluk = role === "pdo" || role === "village_incharge" || role === "tdo";
-    const needsVillage = role === "pdo" || role === "village_incharge";
-    const needsPanchayat = role === "pdo" || role === "village_incharge";
-
-    // Function to send registration email (Firebase Cloud Function call)
-    const sendRegistrationEmail = async (userId: string, userEmail: string, userName: string, userRole: string) => {
-        // ✅ TEMPORARILY DISABLED DUE TO CORS ISSUES
-        console.log(`[DEV] Email would be sent to ${userEmail} for ${userName} as ${userRole}`);
-        return; // Exit early - COMMENT THIS OUT WHEN CORS IS FIXED
-
+    // Check email availability
+    const checkEmailAvailability = async (email: string) => {
+        if (!validateEmail(email)) return;
+        
+        setEmailChecking(true);
         try {
-            const cloudFunctionURL = process.env.NEXT_PUBLIC_CLOUD_FUNCTION_URL ||
-                "https://us-central1-your-project-id.cloudfunctions.net/sendRegistrationEmail";
-
-            const response = await fetch(cloudFunctionURL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    email: userEmail,
-                    name: userName,
-                    role: userRole,
-                    action: "registration_complete"
-                }),
-            });
-
-            if (!response.ok) {
-                console.warn('Registration email failed to send, but registration was successful');
-                console.warn(`Email status: ${response.status} - ${response.statusText}`);
-            } else {
-                console.log('Registration email sent successfully');
-            }
+            const usersQuery = query(
+                collection(db, "users"),
+                where("email", "==", email),
+                limit(1)
+            );
+            const usersSnapshot = await getDocs(usersQuery);
+            
+            const villagersQuery = query(
+                collection(db, "villagers"),
+                where("email", "==", email),
+                limit(1)
+            );
+            const villagersSnapshot = await getDocs(villagersQuery);
+            
+            const authoritiesQuery = query(
+                collection(db, "authorities"),
+                where("email", "==", email),
+                limit(1)
+            );
+            const authoritiesSnapshot = await getDocs(authoritiesQuery);
+            
+            setEmailValid(
+                usersSnapshot.empty && 
+                villagersSnapshot.empty && 
+                authoritiesSnapshot.empty
+            );
         } catch (error) {
-            console.error('Error sending registration email:', error);
+            console.error("Error checking email:", error);
+            setEmailValid(null);
+        } finally {
+            setEmailChecking(false);
         }
     };
 
+    // Debounced email check
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (email && touched.email) {
+                checkEmailAvailability(email);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [email, touched.email]);
+
     // Validate password strength
     const validatePasswordStrength = (pwd: string) => {
-        const hasUppercase = /[A-Z]/.test(pwd);
-        const hasLowercase = /[a-z]/.test(pwd);
-        const hasNumber = /\d/.test(pwd);
-        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
-        const hasMinLength = pwd.length >= 8;
-
         setPasswordStrength({
-            hasUppercase,
-            hasLowercase,
-            hasNumber,
-            hasSpecialChar,
-            hasMinLength
+            hasUppercase: /[A-Z]/.test(pwd),
+            hasLowercase: /[a-z]/.test(pwd),
+            hasNumber: /\d/.test(pwd),
+            hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
+            hasMinLength: pwd.length >= 8
         });
     };
 
-    // Handle password change
     const handlePasswordChange = (value: string) => {
         setPassword(value);
         validatePasswordStrength(value);
@@ -412,43 +378,40 @@ export default function AuthorityRegisterPage() {
         }
     };
 
-    // Handle mobile change
-    const handleMobileChange = (value: string) => {
-        // Remove all non-digits
-        const digitsOnly = value.replace(/\D/g, '');
+    const isPasswordValid = () => {
+        return Object.values(passwordStrength).every(Boolean);
+    };
 
-        // Handle different input formats
+    const validateAadhaar = (aadhaar: string): boolean => {
+        const cleanAadhaar = aadhaar.replace(/\D/g, '');
+        return cleanAadhaar.length === 12 && /^\d+$/.test(cleanAadhaar);
+    };
+
+    const handleAadhaarChange = (value: string) => {
+        const cleaned = value.replace(/\D/g, '').slice(0, 12);
+        setAadhaar(cleaned);
+        if (touched.aadhaar) {
+            setTouched(prev => ({ ...prev, aadhaar: true }));
+        }
+    };
+
+    const handleMobileChange = (value: string) => {
+        const digitsOnly = value.replace(/\D/g, '');
         let processed = digitsOnly;
         if (digitsOnly.startsWith('91') && digitsOnly.length > 10) {
-            // If user types 91 first, keep the 91 prefix
             processed = digitsOnly;
         } else if (digitsOnly.length > 10) {
-            // If more than 10 digits, take last 10
             processed = digitsOnly.slice(-10);
         } else {
             processed = digitsOnly;
         }
-
         setMobile(processed);
-
-        // Update validation state
         if (touched.mobile) {
             setTouched(prev => ({ ...prev, mobile: true }));
         }
     };
 
-    // Check if password is valid
-    const isPasswordValid = () => {
-        return (
-            passwordStrength.hasUppercase &&
-            passwordStrength.hasLowercase &&
-            passwordStrength.hasNumber &&
-            passwordStrength.hasSpecialChar &&
-            passwordStrength.hasMinLength
-        );
-    };
-
-    // Load districts on mount
+    // Load districts
     useEffect(() => {
         const loadDistricts = async () => {
             setLoadingLoc(true);
@@ -458,17 +421,14 @@ export default function AuthorityRegisterPage() {
                     orderBy("name", "asc")
                 );
                 const snap = await getDocs(q);
-                const districtsData = snap.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as District)
+                const districtsData = snap.docs.map((d) => ({ 
+                    id: d.id, 
+                    ...(d.data() as any) 
                 }));
                 setDistricts(districtsData);
-
-                if (districtsData.length === 0) {
-                    setUseManualDistrict(true);
-                }
-            } catch (e: any) {
+            } catch (e) {
                 console.error("Error loading districts:", e);
+                setErr(t.errors.loadLoc);
             } finally {
                 setLoadingLoc(false);
             }
@@ -476,422 +436,229 @@ export default function AuthorityRegisterPage() {
         loadDistricts();
     }, []);
 
-    // Load taluks when district is selected
+    // Load taluks when district changes
     useEffect(() => {
         const loadTaluks = async () => {
-            if (!selectedDistrict || useManualDistrict) return;
+            if (!districtId) {
+                setTaluks([]);
+                setTalukId("");
+                setVillageId("");
+                setPanchayatId("");
+                return;
+            }
 
             setLoadingLoc(true);
             try {
                 const q = query(
                     collection(db, "taluks"),
-                    where("districtId", "==", selectedDistrict),
+                    where("districtId", "==", districtId),
                     orderBy("name", "asc")
                 );
                 const snap = await getDocs(q);
-                const taluksData = snap.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as Taluk)
+                const taluksData = snap.docs.map((d) => ({ 
+                    id: d.id, 
+                    ...(d.data() as any) 
                 }));
                 setTaluks(taluksData);
-
-                if (taluksData.length === 0) {
-                    setUseManualTaluk(true);
-                } else {
-                    setUseManualTaluk(false);
-                }
-            } catch (e: any) {
+                setTalukId("");
+                setVillageId("");
+                setPanchayatId("");
+            } catch (e) {
                 console.error("Error loading taluks:", e);
             } finally {
                 setLoadingLoc(false);
             }
         };
         loadTaluks();
-    }, [selectedDistrict, useManualDistrict]);
+    }, [districtId]);
 
-    // Load villages when taluk is selected
+    // Load villages when taluk changes
     useEffect(() => {
         const loadVillages = async () => {
-            if (!selectedTaluk || useManualTaluk) return;
+            if (!districtId || !talukId) {
+                setVillages([]);
+                setVillageId("");
+                setPanchayatId("");
+                return;
+            }
 
             setLoadingLoc(true);
             try {
                 const q = query(
                     collection(db, "villages"),
-                    where("talukId", "==", selectedTaluk),
+                    where("talukId", "==", talukId),
+                    where("districtId", "==", districtId),
                     orderBy("name", "asc")
                 );
                 const snap = await getDocs(q);
-                const villagesData = snap.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as Village)
+                const villagesData = snap.docs.map((d) => ({ 
+                    id: d.id, 
+                    ...(d.data() as any) 
                 }));
                 setVillages(villagesData);
-
-                if (villagesData.length === 0) {
-                    setUseManualVillage(true);
-                } else {
-                    setUseManualVillage(false);
-                }
-            } catch (e: any) {
+                setVillageId("");
+                setPanchayatId("");
+            } catch (e) {
                 console.error("Error loading villages:", e);
             } finally {
                 setLoadingLoc(false);
             }
         };
+        loadVillages();
+    }, [talukId, districtId]);
 
-        if (needsVillage) {
-            loadVillages();
-        }
-    }, [selectedTaluk, useManualTaluk, needsVillage]);
-
-    // Load panchayats when village is selected
+    // Load panchayats when village changes
     useEffect(() => {
         const loadPanchayats = async () => {
-            if (!selectedVillage || useManualVillage) return;
+            if (!districtId || !talukId || !villageId) {
+                setPanchayats([]);
+                setPanchayatId("");
+                return;
+            }
 
             setLoadingLoc(true);
             try {
                 const q = query(
                     collection(db, "panchayats"),
-                    where("villageId", "==", selectedVillage),
+                    where("talukId", "==", talukId),
+                    where("districtId", "==", districtId),
+                    where("villageId", "==", villageId),
                     orderBy("name", "asc")
                 );
                 const snap = await getDocs(q);
-                const panchayatsData = snap.docs.map((d) => ({
-                    id: d.id,
-                    ...(d.data() as Panchayat)
+                const panchayatsData = snap.docs.map((d) => ({ 
+                    id: d.id, 
+                    ...(d.data() as any) 
                 }));
                 setPanchayats(panchayatsData);
-
-                if (panchayatsData.length === 0) {
-                    setUseManualPanchayat(true);
-                } else {
-                    setUseManualPanchayat(false);
-                }
-            } catch (e: any) {
+                setPanchayatId("");
+            } catch (e) {
                 console.error("Error loading panchayats:", e);
-                // If panchayats collection doesn't exist or is empty, allow manual entry
-                setUseManualPanchayat(true);
             } finally {
                 setLoadingLoc(false);
             }
         };
-
-        if (needsPanchayat && selectedVillage) {
-            loadPanchayats();
-        }
-    }, [selectedVillage, useManualVillage, needsPanchayat]);
-
-    // Handle role change
-    const handleRoleChange = (newRole: Role) => {
-        setRole(newRole);
-        // Reset location selections
-        setSelectedDistrict("");
-        setSelectedTaluk("");
-        setSelectedVillage("");
-        setSelectedPanchayat("");
-        setNewDistrict("");
-        setNewTaluk("");
-        setNewVillage("");
-        setNewPanchayat("");
-        setGramPanchayatId("");
-        setUseManualPanchayat(false);
-    };
-
-    // Validate Aadhaar
-    const validateAadhaar = (aadhaar: string): boolean => {
-        const cleanAadhaar = aadhaar.replace(/\D/g, '');
-        return cleanAadhaar.length === 12 && /^\d+$/.test(cleanAadhaar);
-    };
+        loadPanchayats();
+    }, [villageId, talukId, districtId]);
 
     const handleSubmit = async () => {
         setErr("");
 
         // Validation
         if (!name.trim()) {
-            setErr("Name is required");
+            setErr(t.errors.name);
             setTouched(prev => ({ ...prev, name: true }));
             return;
         }
-        if (!email.trim() || !email.includes("@")) {
-            setErr("Valid email is required");
+
+        if (!validateEmail(email)) {
+            setErr(t.errors.emailDomain);
             setTouched(prev => ({ ...prev, email: true }));
             return;
         }
+
+        if (!emailValid) {
+            setErr(t.errors.emailExists);
+            return;
+        }
+
         if (!isPasswordValid()) {
-            setErr("Enter a valid password");
+            setErr(t.errors.password);
             setTouched(prev => ({ ...prev, password: true }));
             return;
         }
+
         if (!validateIndianMobile(mobile)) {
-            setErr(t.mobileInvalid);
+            setErr(t.errors.mobile);
             setTouched(prev => ({ ...prev, mobile: true }));
             return;
         }
+
         if (!validateAadhaar(aadhaar)) {
-            setErr("Aadhaar must be exactly 12 digits");
+            setErr(t.errors.aadhaar);
             setTouched(prev => ({ ...prev, aadhaar: true }));
             return;
         }
-        if (!officeAddress.trim()) {
-            setErr("Office address is required");
-            setTouched(prev => ({ ...prev, officeAddress: true }));
-            return;
-        }
 
-        // District validation
-        let districtName = "";
-        if (useManualDistrict) {
-            if (!newDistrict.trim()) {
-                setErr("District name is required");
-                return;
-            }
-            districtName = newDistrict.trim();
-        } else {
-            if (!selectedDistrict) {
-                setErr("Please select a district");
-                return;
-            }
-            const district = districts.find(d => d.id === selectedDistrict);
-            districtName = district?.name || "";
-        }
-
-        // Taluk validation (if needed)
-        let talukName = "";
-        let talukId = selectedTaluk;
-        if (needsTaluk) {
-            if (useManualTaluk) {
-                if (!newTaluk.trim()) {
-                    setErr("Taluk name is required");
-                    return;
-                }
-                talukName = newTaluk.trim();
-            } else {
-                if (!selectedTaluk) {
-                    setErr("Please select a taluk");
-                    return;
-                }
-                const taluk = taluks.find(t => t.id === selectedTaluk);
-                talukName = taluk?.name || "";
-                talukId = selectedTaluk;
-            }
-        }
-
-        // Village validation (if needed)
-        let villageName = "";
-        let villageId = selectedVillage;
-        if (needsVillage) {
-            if (useManualVillage) {
-                if (!newVillage.trim()) {
-                    setErr("Village name is required");
-                    return;
-                }
-                villageName = newVillage.trim();
-            } else {
-                if (!selectedVillage) {
-                    setErr("Please select a village");
-                    return;
-                }
-                const village = villages.find(v => v.id === selectedVillage);
-                villageName = village?.name || "";
-                villageId = selectedVillage;
-            }
-        }
-
-        // Panchayat validation (if needed)
-        let panchayatName = "";
-        let panchayatId = selectedPanchayat;
-        if (needsPanchayat) {
-            if (useManualPanchayat) {
-                if (!newPanchayat.trim()) {
-                    setErr("Panchayat name is required");
-                    return;
-                }
-                panchayatName = newPanchayat.trim();
-            } else {
-                if (!selectedPanchayat) {
-                    setErr("Please select a panchayat");
-                    return;
-                }
-                const panchayat = panchayats.find(p => p.id === selectedPanchayat);
-                panchayatName = panchayat?.name || "";
-                panchayatId = selectedPanchayat;
-            }
-        }
-
-        // Gram Panchayat ID validation
-        if ((role === "pdo" || role === "village_incharge") && !gramPanchayatId.trim()) {
-            setErr("Gram Panchayat ID is required");
+        if (!districtId || !talukId || !villageId || !panchayatId) {
+            setErr(t.errors.selectLocation);
             return;
         }
 
         try {
             setLoading(true);
 
-            // 1. Create Firebase Auth user
-            const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-            const userId = userCredential.user.uid;
+            const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
 
-            // 2. Store location data in database if entered manually
-            let districtId = selectedDistrict;
-            let finalTalukId = talukId;
-            let finalVillageId = villageId;
-            let finalPanchayatId = panchayatId;
+            const districtName = districts.find((d) => d.id === districtId)?.name || "";
+            const talukName = taluks.find((x) => x.id === talukId)?.name || "";
+            const villageName = villages.find((v) => v.id === villageId)?.name || "";
+            const panchayat = panchayats.find((p) => p.id === panchayatId);
+            const panchayatName = panchayat?.name || "";
+            const panchayatCode = panchayat?.code || "";
 
-            // Store new district if entered manually
-            if (useManualDistrict && newDistrict.trim()) {
-                const districtDoc = await addDoc(collection(db, "districts"), {
-                    name: newDistrict.trim(),
-                    state: "Karnataka",
-                    isActive: true,
-                    createdBy: userId,
-                    createdAt: serverTimestamp()
-                });
-                districtId = districtDoc.id;
-                districtName = newDistrict.trim();
-            }
-
-            // Store new taluk if entered manually
-            if (needsTaluk && useManualTaluk && newTaluk.trim() && districtId) {
-                const talukDoc = await addDoc(collection(db, "taluks"), {
-                    name: newTaluk.trim(),
-                    districtId: districtId,
-                    districtName: districtName,
-                    isActive: true,
-                    createdBy: userId,
-                    createdAt: serverTimestamp()
-                });
-                finalTalukId = talukDoc.id;
-                talukName = newTaluk.trim();
-            }
-
-            // Store new village if entered manually
-            if (needsVillage && useManualVillage && newVillage.trim() && finalTalukId) {
-                const villageDoc = await addDoc(collection(db, "villages"), {
-                    name: newVillage.trim(),
-                    districtId: districtId,
-                    districtName: districtName,
-                    talukId: finalTalukId,
-                    talukName: talukName,
-                    isActive: true,
-                    createdBy: userId,
-                    createdAt: serverTimestamp()
-                });
-                finalVillageId = villageDoc.id;
-                villageName = newVillage.trim();
-            }
-
-            // Store new panchayat if entered manually
-            if (needsPanchayat && useManualPanchayat && newPanchayat.trim() && finalVillageId) {
-                const panchayatDoc = await addDoc(collection(db, "panchayats"), {
-                    name: newPanchayat.trim(),
-                    villageId: finalVillageId,
-                    villageName: villageName,
-                    talukId: finalTalukId,
-                    talukName: talukName,
-                    districtId: districtId,
-                    districtName: districtName,
-                    gramPanchayatId: gramPanchayatId.trim(),
-                    isActive: true,
-                    createdBy: userId,
-                    createdAt: serverTimestamp()
-                });
-                finalPanchayatId = panchayatDoc.id;
-                panchayatName = newPanchayat.trim();
-            }
-
-            // 3. Create authority profile with verification fields
-            const authorityData = {
-                uid: userId,
-                role,
+            const villagerData = {
+                uid: cred.user.uid,
                 name: name.trim(),
-                email: email.trim(),
-                mobile: mobile.replace(/\D/g, "").slice(-10), // Store last 10 digits
-                mobileFormatted: formatIndianMobile(mobile), // Store formatted version
-                aadhaar: aadhaar.replace(/\D/g, ""), // Store full 12-digit Aadhaar
-                aadhaarLast4: aadhaar.replace(/\D/g, "").slice(-4), // Store last 4 for display
-                officeAddress: officeAddress.trim(),
-                gramPanchayatId: gramPanchayatId.trim(),
-                districtId: districtId,
+                email: email.trim().toLowerCase(),
+                mobile: mobile.replace(/\D/g, "").slice(-10),
+                mobileFormatted: formatIndianMobile(mobile),
+                aadhaar: aadhaar.replace(/\D/g, ""),
+                aadhaarLast4: aadhaar.replace(/\D/g, "").slice(-4),
+                districtId,
+                talukId,
+                villageId,
+                panchayatId,
                 district: districtName,
-                talukId: needsTaluk ? finalTalukId : null,
-                taluk: needsTaluk ? talukName : null,
-                villageId: needsVillage ? finalVillageId : null,
-                village: needsVillage ? villageName : null,
-                panchayatId: needsPanchayat ? finalPanchayatId : null,
-                panchayat: needsPanchayat ? panchayatName : null,
-                isManualEntry: {
-                    district: useManualDistrict,
-                    taluk: useManualTaluk,
-                    village: useManualVillage,
-                    panchayat: useManualPanchayat
-                },
-                // Verification fields - must match Firestore rules
-                verified: false,
-                verification: {
-                    status: "pending",
-                    requestedAt: serverTimestamp()
-                },
+                taluk: talukName,
+                village: villageName,
+                panchayatName,
+                panchayatCode,
                 status: "pending",
+                verified: false,
                 createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
             };
 
-            // Create authority document
-            await setDoc(doc(db, "authorities", userId), authorityData);
+            await setDoc(doc(db, "villagers", cred.user.uid), villagerData);
 
-            // Also create user document
-            await setDoc(doc(db, "users", userId), {
-                uid: userId,
+            await setDoc(doc(db, "users", cred.user.uid), {
+                uid: cred.user.uid,
                 name: name.trim(),
-                email: email.trim(),
-                role: "authority",
-                authorityRole: role,
+                email: email.trim().toLowerCase(),
+                role: "villager",
+                panchayatId,
+                districtId,
+                talukId,
+                villageId,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
 
-            // 4. Send registration email (fire and forget - don't wait for it)
-            // ✅ This will now only log to console, not actually send email
-            sendRegistrationEmail(userId, email.trim(), name.trim(), role).catch(error => {
-                console.error("Email sending failed (non-critical):", error);
-            });
-
-            // 5. Sign out and redirect to status page
-            await signOut(auth);
-            router.replace(`/${locale}/authority/status`);
+            setSuccess(true);
+            setTimeout(() => {
+                router.replace(`/${locale}/villager/status`);
+            }, 2000);
 
         } catch (error: any) {
             console.error("Registration error:", error);
-
-            // Firebase auth errors
+            
             if (error.code === "auth/email-already-in-use") {
-                setErr("Email already registered");
+                setErr(t.errors.emailExists);
             } else if (error.code === "auth/invalid-email") {
-                setErr("Invalid email address");
+                setErr(t.errors.email);
             } else if (error.code === "auth/weak-password") {
-                setErr("Password is too weak");
-            } else if (error.code === "auth/operation-not-allowed") {
-                setErr("Email/password sign-in is disabled");
-            } else if (error.code === "permission-denied") {
-                setErr("Permission denied. Please check your Firestore security rules.");
+                setErr(t.errors.password);
             } else if (error.message) {
                 setErr(error.message);
             } else {
                 setErr("Registration failed. Please try again.");
             }
-
-            // Clean up on error
-            try {
-                await signOut(auth);
-            } catch { }
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle key press for Enter key
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !loading) {
             handleSubmit();
@@ -939,23 +706,14 @@ export default function AuthorityRegisterPage() {
                     50% { transform: translateY(-8px); }
                 }
 
-                @keyframes glow {
-                    0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.3); }
-                    50% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
-                }
-
                 @keyframes pulse {
                     0%, 100% { transform: scale(1); }
                     50% { transform: scale(1.05); }
                 }
 
                 @keyframes shimmer {
-                    0% {
-                        background-position: -1000px 0;
-                    }
-                    100% {
-                        background-position: 1000px 0;
-                    }
+                    0% { background-position: -1000px 0; }
+                    100% { background-position: 1000px 0; }
                 }
 
                 .animate-fadeIn {
@@ -978,10 +736,6 @@ export default function AuthorityRegisterPage() {
 
                 .animate-float {
                     animation: float 3s ease-in-out infinite;
-                }
-
-                .animate-glow {
-                    animation: glow 2s infinite;
                 }
 
                 .animate-pulse-slow {
@@ -1012,6 +766,7 @@ export default function AuthorityRegisterPage() {
                     border-color: rgba(22, 163, 74, 0.6);
                     box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.08), 0 4px 12px rgba(22, 163, 74, 0.1);
                     transform: translateY(-2px);
+                    outline: none;
                 }
 
                 .input-field.error {
@@ -1156,10 +911,6 @@ export default function AuthorityRegisterPage() {
                     filter: drop-shadow(0 4px 8px rgba(22, 163, 74, 0.2));
                 }
 
-                .bg-orb {
-                    transition: opacity 0.3s ease;
-                }
-
                 .strength-meter {
                     display: flex;
                     gap: 3px;
@@ -1182,7 +933,6 @@ export default function AuthorityRegisterPage() {
                     background: #059669;
                 }
 
-                /* Login Button Styles */
                 .login-button {
                     display: inline-flex;
                     align-items: center;
@@ -1220,7 +970,7 @@ export default function AuthorityRegisterPage() {
                 /* Mobile Responsive Styles */
                 @media (max-width: 640px) {
                     .input-field {
-                        font-size: 16px !important; /* Prevents zoom on iOS */
+                        font-size: 16px !important;
                         padding: 12px 16px !important;
                     }
                     
@@ -1233,7 +983,7 @@ export default function AuthorityRegisterPage() {
                     }
                     
                     button, select, .link-hover, .icon-button {
-                        min-height: 48px; /* Better touch targets */
+                        min-height: 48px;
                         min-width: 48px;
                     }
                     
@@ -1277,18 +1027,6 @@ export default function AuthorityRegisterPage() {
                     }
                 }
 
-                /* Prevent zoom on select in iOS */
-                select {
-                    font-size: 16px !important;
-                }
-
-                /* Better visual feedback for touch */
-                .button-base:active {
-                    transform: scale(0.98);
-                    opacity: 0.9;
-                }
-
-                /* Improve readability on small screens */
                 @media (max-width: 380px) {
                     .grid {
                         grid-template-columns: 1fr !important;
@@ -1317,7 +1055,6 @@ export default function AuthorityRegisterPage() {
                     }
                 }
 
-                /* Better spacing for very small devices */
                 @media (max-width: 320px) {
                     .p-6 {
                         padding: 16px !important;
@@ -1336,20 +1073,20 @@ export default function AuthorityRegisterPage() {
                     }
                 }
 
-                /* Improve touch targets for checkboxes and radios if any */
-                input[type="checkbox"], 
-                input[type="radio"] {
-                    min-width: 20px;
-                    min-height: 20px;
+                select {
+                    font-size: 16px !important;
                 }
 
-                /* Better focus states for accessibility */
+                .button-base:active {
+                    transform: scale(0.98);
+                    opacity: 0.9;
+                }
+
                 :focus-visible {
                     outline: 2px solid #16a34a;
                     outline-offset: 2px;
                 }
 
-                /* Animated background orbs */
                 .orb {
                     position: absolute;
                     border-radius: 50%;
@@ -1398,16 +1135,16 @@ export default function AuthorityRegisterPage() {
                         <div className="flex items-center justify-between flex-wrap gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="header-icon animate-pulse-slow">
-                                    <Shield className="w-9 h-9 text-green-700" />
+                                    <FiShield className="w-9 h-9 text-green-700" />
                                 </div>
                                 <h1 className="text-3xl font-bold text-green-900 tracking-tight">
                                     {t.title}
                                 </h1>
                             </div>
                             
-                            {/* Login Button for already registered users */}
+                            {/* Login Button */}
                             <button
-                                onClick={() => router.push(`/${locale}/authority/login`)}
+                                onClick={() => router.push(`/${locale}/villager/login`)}
                                 className="login-button animate-slideInRight"
                             >
                                 <LogIn className="w-4 h-4" />
@@ -1417,18 +1154,14 @@ export default function AuthorityRegisterPage() {
                         <p className="text-base text-green-700/75 leading-relaxed font-semibold mt-4">
                             {t.subtitle}
                         </p>
-                        <p className="text-sm text-green-600/70 mt-2 font-semibold flex items-center gap-2">
-                            <span className="animate-float">🏛️</span>
-                            <span>{t.govService}</span>
-                        </p>
                     </div>
 
-                    {/* Already registered message for mobile */}
+                    {/* Mobile login link */}
                     <div className="sm:hidden mb-4 text-center animate-slideUp delay-100">
                         <p className="text-sm text-green-700">
                             {t.alreadyRegistered}{" "}
                             <button
-                                onClick={() => router.push(`/${locale}/authority/login`)}
+                                onClick={() => router.push(`/${locale}/villager/login`)}
                                 className="text-green-600 font-semibold underline underline-offset-2 hover:text-green-700 transition-colors"
                             >
                                 {t.loginHere}
@@ -1441,574 +1174,422 @@ export default function AuthorityRegisterPage() {
                         <div className="mb-6 p-4 rounded-2xl border border-red-200 bg-red-50/80 animate-slideUp delay-200">
                             <div className="flex items-start gap-3 text-red-700">
                                 <FiAlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 animate-pulse" />
-                                <span className="text-sm leading-snug">
-                                    {err}
-                                </span>
+                                <span className="text-sm leading-snug">{err}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Success Message */}
+                    {success && (
+                        <div className="mb-6 p-6 rounded-3xl bg-gradient-to-r from-green-500 to-emerald-500 shadow-2xl animate-bounceIn">
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="p-2 bg-white rounded-full">
+                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg">Registration Successful!</h3>
+                                    <p className="text-sm text-green-50">Redirecting to status page...</p>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* Main Form Card */}
-                    <div className="card-bg border border-green-100 rounded-3xl shadow-lg overflow-hidden animate-slideUp delay-300">
-                        <div className="p-6 sm:p-8">
-                            {/* Role Selection with animation */}
-                            <div className="mb-8 animate-fadeIn delay-400">
-                                <label className="text-sm font-semibold text-green-900 mb-3 flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-green-600 flex-shrink-0 animate-float" />
-                                    <span className="truncate">{t.role}</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        value={role}
-                                        onChange={(e) => handleRoleChange(e.target.value as Role)}
-                                        className="input-field w-full rounded-2xl px-5 py-3.5 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
-                                    >
-                                        {ROLES.map((r) => (
-                                            <option key={r.id} value={r.id}>
-                                                {r.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
-                                        <svg className="fill-current h-5 w-5 animate-pulse-slow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
+                    {!success && (
+                        <div className="card-bg border border-green-100 rounded-3xl shadow-lg overflow-hidden animate-slideUp delay-300">
+                            <div className="p-6 sm:p-8">
+                                {/* Personal Information Section */}
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2 animate-fadeIn delay-400">
+                                        <User className="w-5 h-5 animate-float" />
+                                        Personal Information
+                                    </h3>
 
-                            {/* Personal Information Section */}
-                            <div className="mb-8">
-                                <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2 animate-fadeIn delay-500">
-                                    <User className="w-5 h-5 animate-float" />
-                                    Personal Information
-                                </h3>
-
-                                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                                    {/* Name */}
-                                    <div className="col-span-1 animate-fadeIn delay-600">
-                                        <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                            <User className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                            <span className="truncate">{t.fullName}</span>
-                                        </label>
-                                        <input
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            onBlur={() => setTouched(prev => ({ ...prev, name: true }))}
-                                            onKeyPress={handleKeyPress}
-                                            className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${touched.name && !name.trim() ? 'error' : ''
+                                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                                        {/* Name */}
+                                        <div className="col-span-1 animate-fadeIn delay-500">
+                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+                                                <User className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                                <span className="truncate">{t.fullName}</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                onBlur={() => setTouched(prev => ({ ...prev, name: true }))}
+                                                onKeyPress={handleKeyPress}
+                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                    touched.name && !name.trim() ? 'error' : ''
                                                 }`}
-                                            placeholder={t.enterFullName}
-                                        />
-                                    </div>
-
-                                    {/* Email */}
-                                    <div className="col-span-1 animate-fadeIn delay-700">
-                                        <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                            <Mail className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                            <span className="truncate">{t.email}</span>
-                                        </label>
-                                        <input
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
-                                            onKeyPress={handleKeyPress}
-                                            className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${touched.email && (!email.trim() || !email.includes('@')) ? 'error' : ''
-                                                }`}
-                                            placeholder={t.enterEmail}
-                                            type="email"
-                                            inputMode="email"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Password */}
-                                <div className="mt-4 animate-fadeIn" style={{ animationDelay: '0.8s' }}>
-                                    <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                        <Shield className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                        <span className="truncate">{t.password}</span>
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            value={password}
-                                            onChange={(e) => handlePasswordChange(e.target.value)}
-                                            onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
-                                            onKeyPress={handleKeyPress}
-                                            className={`input-field w-full rounded-2xl px-4 py-3 pr-12 outline-none text-green-900 placeholder-green-400/50 text-base ${touched.password && !isPasswordValid() ? 'error' : ''
-                                                }`}
-                                            type={showPassword ? "text" : "password"}
-                                            placeholder={t.enterPassword}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="icon-button absolute right-2 top-1/2 -translate-y-1/2 text-green-600/60 hover:text-green-700 p-2 rounded-lg flex items-center justify-center"
-                                            aria-label="Toggle password visibility"
-                                        >
-                                            {showPassword ? (
-                                                <EyeOff className="w-5 h-5" />
-                                            ) : (
-                                                <Eye className="w-5 h-5" />
-                                            )}
-                                        </button>
-                                    </div>
-
-                                    {/* Password strength meter */}
-                                    <div className="strength-meter">
-                                        {[1, 2, 3, 4, 5].map((index) => (
-                                            <div
-                                                key={index}
-                                                className={`strength-segment ${passwordStrength.hasMinLength && index <= 5 ? 'active' : ''
-                                                    } ${passwordStrength.hasMinLength &&
-                                                        passwordStrength.hasUppercase &&
-                                                        passwordStrength.hasLowercase &&
-                                                        passwordStrength.hasNumber &&
-                                                        passwordStrength.hasSpecialChar &&
-                                                        index <= 5 ? 'strong' : ''
-                                                    }`}
+                                                placeholder={t.enterFullName}
+                                                disabled={loading}
                                             />
-                                        ))}
+                                        </div>
+
+                                        {/* Email */}
+                                        <div className="col-span-1 animate-fadeIn delay-600">
+                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+                                                <Mail className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                                <span className="truncate">{t.email}</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="email"
+                                                    value={email}
+                                                    onChange={(e) => {
+                                                        setEmail(e.target.value);
+                                                        setEmailValid(null);
+                                                    }}
+                                                    onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
+                                                    onKeyPress={handleKeyPress}
+                                                    className={`input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                        touched.email && email && !validateEmail(email) ? 'error' : ''
+                                                    }`}
+                                                    placeholder={t.enterEmail}
+                                                    disabled={loading}
+                                                />
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    {emailChecking && (
+                                                        <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    )}
+                                                    {!emailChecking && emailValid === true && (
+                                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    )}
+                                                    {!emailChecking && emailValid === false && (
+                                                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-green-600/70 mt-1">{t.emailRestriction}</p>
+                                        </div>
                                     </div>
 
-                                    {/* Password requirements */}
-                                    <div className="mt-3 space-y-2">
-                                        <p className="text-xs font-semibold text-green-700">{t.passwordRequirements}</p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasUppercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs ${passwordStrength.hasUppercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                                                    {t.uppercase}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasLowercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs ${passwordStrength.hasLowercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                                                    {t.lowercase}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs ${passwordStrength.hasNumber ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                                                    {t.number}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasSpecialChar ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                                <span className={`text-xs ${passwordStrength.hasSpecialChar ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                                                    {t.specialChar}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center mt-1">
-                                            <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasMinLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                            <span className={`text-xs ${passwordStrength.hasMinLength ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
-                                                {t.minLength}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mt-4">
-                                    {/* Mobile with +91 prefix */}
-                                    <div className="col-span-1 animate-fadeIn" style={{ animationDelay: '0.9s' }}>
+                                    {/* Password */}
+                                    <div className="mt-4 animate-fadeIn delay-700">
                                         <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                            <span className="truncate">{t.mobile}</span>
+                                            <FiShield className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                            <span className="truncate">{t.password}</span>
                                         </label>
                                         <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                                <span className="text-green-600 font-medium text-sm sm:text-base bg-green-50 px-2 py-1.5 rounded-l-xl border-r border-green-200">
-                                                    +91
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => handlePasswordChange(e.target.value)}
+                                                onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
+                                                onKeyPress={handleKeyPress}
+                                                className={`input-field w-full rounded-2xl px-4 py-3 pr-12 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                    touched.password && !isPasswordValid() ? 'error' : ''
+                                                }`}
+                                                placeholder={t.enterPassword}
+                                                disabled={loading}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="icon-button absolute right-2 top-1/2 -translate-y-1/2 text-green-600/60 hover:text-green-700 p-2 rounded-lg"
+                                            >
+                                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+
+                                        {/* Password strength meter */}
+                                        <div className="strength-meter">
+                                            {[1, 2, 3, 4, 5].map((index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`strength-segment ${
+                                                        passwordStrength.hasMinLength ? 'active' : ''
+                                                    } ${
+                                                        isPasswordValid() ? 'strong' : ''
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+
+                                        {/* Password requirements */}
+                                        <div className="mt-3 space-y-2">
+                                            <p className="text-xs font-semibold text-green-700">{t.passwordRequirements}</p>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <div className="flex items-center">
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasUppercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasUppercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                        {t.uppercase}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasLowercase ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasLowercase ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                        {t.lowercase}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasNumber ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                        {t.number}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasSpecialChar ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                    <span className={`text-xs ${passwordStrength.hasSpecialChar ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                        {t.specialChar}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center mt-1">
+                                                <div className={`w-2 h-2 rounded-full mr-2 ${passwordStrength.hasMinLength ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                                <span className={`text-xs ${passwordStrength.hasMinLength ? 'text-green-700 font-semibold' : 'text-gray-500'}`}>
+                                                    {t.minLength}
                                                 </span>
                                             </div>
-                                            <input
-                                                value={mobile}
-                                                onChange={(e) => handleMobileChange(e.target.value)}
-                                                onBlur={() => setTouched(prev => ({ ...prev, mobile: true }))}
-                                                onKeyPress={handleKeyPress}
-                                                className={`input-field w-full rounded-2xl pl-16 pr-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${touched.mobile && mobile && !validateIndianMobile(mobile) ? 'error' : ''
-                                                    }`}
-                                                placeholder={t.enterMobile}
-                                                inputMode="numeric"
-                                                type="tel"
-                                            />
                                         </div>
-                                        {mobile && !validateIndianMobile(mobile) && touched.mobile && (
-                                            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                                                <FiAlertCircle className="w-3 h-3 flex-shrink-0" />
-                                                <span>{t.mobileInvalid}</span>
-                                            </p>
-                                        )}
-                                        {validateIndianMobile(mobile) && (
-                                            <p className="text-xs text-green-600 mt-1 font-semibold">
-                                                ✓ {formatIndianMobile(mobile)}
-                                            </p>
-                                        )}
-                                        <p className="text-xs text-green-900/60 mt-1">
-                                            {t.mobileHint}
-                                        </p>
                                     </div>
 
-                                    {/* Aadhaar */}
-                                    <div className="col-span-1 animate-fadeIn" style={{ animationDelay: '1s' }}>
-                                        <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                            <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                            <span className="truncate">{t.aadhaar}</span>
-                                        </label>
-                                        <input
-                                            value={aadhaar}
-                                            onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, '').slice(0, 12))}
-                                            onBlur={() => setTouched(prev => ({ ...prev, aadhaar: true }))}
-                                            onKeyPress={handleKeyPress}
-                                            className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${touched.aadhaar && !validateAadhaar(aadhaar) ? 'error' : ''
-                                                }`}
-                                            placeholder={t.enterAadhaar}
-                                            inputMode="numeric"
-                                        />
-                                        <p className="text-xs text-green-900/60 mt-1">
-                                            {t.aadhaarNote}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Office Address */}
-                                <div className="mt-4 animate-fadeIn" style={{ animationDelay: '1.1s' }}>
-                                    <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
-                                        <Home className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                        <span className="truncate">{t.officeAddress}</span>
-                                    </label>
-                                    <textarea
-                                        value={officeAddress}
-                                        onChange={(e) => setOfficeAddress(e.target.value)}
-                                        onBlur={() => setTouched(prev => ({ ...prev, officeAddress: true }))}
-                                        onKeyPress={handleKeyPress}
-                                        className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base resize-none ${touched.officeAddress && !officeAddress.trim() ? 'error' : ''
-                                            }`}
-                                        rows={3}
-                                        placeholder={t.enterOfficeAddress}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Location Information Section */}
-                            <div className="animate-fadeIn" style={{ animationDelay: '1.2s' }}>
-                                <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 animate-float" />
-                                    Location Information
-                                </h3>
-
-                                <div className="space-y-4">
-                                    {/* District */}
-                                    <div className="animate-fadeIn" style={{ animationDelay: '1.3s' }}>
-                                        <label className="text-sm font-semibold text-green-900 mb-2">
-                                            {t.district}
-                                        </label>
-                                        {useManualDistrict ? (
-                                            <div>
-                                                <input
-                                                    value={newDistrict}
-                                                    onChange={(e) => setNewDistrict(e.target.value)}
-                                                    onKeyPress={handleKeyPress}
-                                                    className="input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base"
-                                                    placeholder={t.enterDistrict}
-                                                />
-                                                <p className="text-xs text-green-900/60 mt-1">
-                                                    {t.newEntry.replace('{item}', 'district')}
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <div className="relative">
-                                                    <select
-                                                        value={selectedDistrict}
-                                                        onChange={(e) => {
-                                                            setSelectedDistrict(e.target.value);
-                                                            setSelectedTaluk("");
-                                                            setSelectedVillage("");
-                                                            setSelectedPanchayat("");
-                                                        }}
-                                                        className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
-                                                    >
-                                                        <option value="">{t.selectDistrict}</option>
-                                                        {districts.map((d) => (
-                                                            <option key={d.id} value={d.id}>
-                                                                {d.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
-                                                        <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                                        </svg>
-                                                    </div>
+                                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mt-4">
+                                        {/* Mobile with +91 prefix */}
+                                        <div className="col-span-1 animate-fadeIn delay-800">
+                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+                                                <Phone className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                                <span className="truncate">{t.mobile}</span>
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                                                    <span className="text-green-600 font-medium text-sm sm:text-base bg-green-50 px-2 py-1.5 rounded-l-xl border-r border-green-200">
+                                                        +91
+                                                    </span>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setUseManualDistrict(true)}
-                                                    className="link-hover text-xs text-blue-600 mt-2 hover:text-blue-700 font-semibold inline-block"
-                                                >
-                                                    {t.cantFind.replace('{item}', 'district')}
-                                                </button>
+                                                <input
+                                                    type="tel"
+                                                    value={mobile}
+                                                    onChange={(e) => handleMobileChange(e.target.value)}
+                                                    onBlur={() => setTouched(prev => ({ ...prev, mobile: true }))}
+                                                    onKeyPress={handleKeyPress}
+                                                    className={`input-field w-full rounded-2xl pl-16 pr-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                        touched.mobile && mobile && !validateIndianMobile(mobile) ? 'error' : ''
+                                                    }`}
+                                                    placeholder={t.enterMobile}
+                                                    inputMode="numeric"
+                                                    disabled={loading}
+                                                />
                                             </div>
-                                        )}
-                                    </div>
+                                            {mobile && !validateIndianMobile(mobile) && touched.mobile && (
+                                                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                                                    <FiAlertCircle className="w-3 h-3 flex-shrink-0" />
+                                                    <span>{t.mobileInvalid}</span>
+                                                </p>
+                                            )}
+                                            {validateIndianMobile(mobile) && (
+                                                <p className="text-xs text-green-600 mt-1 font-semibold">
+                                                    ✓ {formatIndianMobile(mobile)}
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-green-900/60 mt-1">{t.mobileHint}</p>
+                                        </div>
 
-                                    {/* Taluk (if needed) */}
-                                    {needsTaluk && (
-                                        <div className="animate-fadeIn" style={{ animationDelay: '1.4s' }}>
+                                        {/* Aadhaar */}
+                                        <div className="col-span-1 animate-fadeIn delay-900">
+                                            <label className="text-sm font-semibold text-green-900 mb-2 flex items-center gap-2">
+                                                <FileText className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                                <span className="truncate">{t.aadhaar}</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={aadhaar}
+                                                onChange={(e) => handleAadhaarChange(e.target.value)}
+                                                onBlur={() => setTouched(prev => ({ ...prev, aadhaar: true }))}
+                                                onKeyPress={handleKeyPress}
+                                                className={`input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base ${
+                                                    touched.aadhaar && !validateAadhaar(aadhaar) ? 'error' : ''
+                                                }`}
+                                                placeholder={t.enterAadhaar}
+                                                inputMode="numeric"
+                                                maxLength={12}
+                                                disabled={loading}
+                                            />
+                                            <p className="text-xs text-green-900/60 mt-1">{t.aadhaarNote}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Location Information Section */}
+                                <div className="animate-fadeIn delay-1000">
+                                    <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
+                                        <MapPin className="w-5 h-5 animate-float" />
+                                        Location Information
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        {/* District */}
+                                        <div className="animate-fadeIn delay-1100">
+                                            <label className="text-sm font-semibold text-green-900 mb-2">
+                                                {t.district}
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    value={districtId}
+                                                    onChange={(e) => setDistrictId(e.target.value)}
+                                                    className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
+                                                    disabled={loadingLoc || loading}
+                                                >
+                                                    <option value="">{t.selectDistrict}</option>
+                                                    {districts.map((d) => (
+                                                        <option key={d.id} value={d.id}>
+                                                            {d.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
+                                                    <svg className="fill-current h-5 w-5" viewBox="0 0 20 20">
+                                                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Taluk */}
+                                        <div className="animate-fadeIn delay-1200">
                                             <label className="text-sm font-semibold text-green-900 mb-2">
                                                 {t.taluk}
                                             </label>
-                                            {useManualTaluk ? (
-                                                <div>
-                                                    <input
-                                                        value={newTaluk}
-                                                        onChange={(e) => setNewTaluk(e.target.value)}
-                                                        onKeyPress={handleKeyPress}
-                                                        className="input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base"
-                                                        placeholder={t.enterTaluk}
-                                                        disabled={!selectedDistrict && !useManualDistrict}
-                                                    />
-                                                    <p className="text-xs text-green-900/60 mt-1">
-                                                        {t.newEntry.replace('{item}', 'taluk')}
-                                                    </p>
+                                            <div className="relative">
+                                                <select
+                                                    value={talukId}
+                                                    onChange={(e) => setTalukId(e.target.value)}
+                                                    className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
+                                                    disabled={!districtId || loadingLoc || loading}
+                                                >
+                                                    <option value="">{t.selectTaluk}</option>
+                                                    {taluks.map((t) => (
+                                                        <option key={t.id} value={t.id}>
+                                                            {t.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
+                                                    <svg className="fill-current h-5 w-5" viewBox="0 0 20 20">
+                                                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                                    </svg>
                                                 </div>
-                                            ) : (
-                                                <div>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={selectedTaluk}
-                                                            onChange={(e) => {
-                                                                setSelectedTaluk(e.target.value);
-                                                                setSelectedVillage("");
-                                                                setSelectedPanchayat("");
-                                                            }}
-                                                            className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
-                                                            disabled={!selectedDistrict && !useManualDistrict}
-                                                        >
-                                                            <option value="">{t.selectTaluk}</option>
-                                                            {taluks.map((t) => (
-                                                                <option key={t.id} value={t.id}>
-                                                                    {t.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
-                                                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setUseManualTaluk(true)}
-                                                        className="link-hover text-xs text-blue-600 mt-2 hover:text-blue-700 font-semibold inline-block"
-                                                        disabled={!selectedDistrict && !useManualDistrict}
-                                                    >
-                                                        {t.cantFind.replace('{item}', 'taluk')}
-                                                    </button>
-                                                </div>
-                                            )}
+                                            </div>
                                         </div>
-                                    )}
 
-                                    {/* Village (if needed) */}
-                                    {needsVillage && (
-                                        <div className="animate-fadeIn" style={{ animationDelay: '1.5s' }}>
+                                        {/* Village */}
+                                        <div className="animate-fadeIn delay-1300">
                                             <label className="text-sm font-semibold text-green-900 mb-2">
                                                 {t.village}
                                             </label>
-                                            {useManualVillage ? (
-                                                <div>
-                                                    <input
-                                                        value={newVillage}
-                                                        onChange={(e) => setNewVillage(e.target.value)}
-                                                        onKeyPress={handleKeyPress}
-                                                        className="input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base"
-                                                        placeholder={t.enterVillage}
-                                                        disabled={!selectedTaluk && !useManualTaluk}
-                                                    />
-                                                    <p className="text-xs text-green-900/60 mt-1">
-                                                        {t.newEntry.replace('{item}', 'village')}
-                                                    </p>
+                                            <div className="relative">
+                                                <select
+                                                    value={villageId}
+                                                    onChange={(e) => setVillageId(e.target.value)}
+                                                    className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
+                                                    disabled={!talukId || loadingLoc || loading}
+                                                >
+                                                    <option value="">{t.selectVillage}</option>
+                                                    {villages.map((v) => (
+                                                        <option key={v.id} value={v.id}>
+                                                            {v.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
+                                                    <svg className="fill-current h-5 w-5" viewBox="0 0 20 20">
+                                                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                                    </svg>
                                                 </div>
-                                            ) : (
-                                                <div>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={selectedVillage}
-                                                            onChange={(e) => {
-                                                                setSelectedVillage(e.target.value);
-                                                                setSelectedPanchayat("");
-                                                            }}
-                                                            className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
-                                                            disabled={!selectedTaluk && !useManualTaluk}
-                                                        >
-                                                            <option value="">{t.selectVillage}</option>
-                                                            {villages.map((v) => (
-                                                                <option key={v.id} value={v.id}>
-                                                                    {v.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
-                                                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setUseManualVillage(true)}
-                                                        className="link-hover text-xs text-blue-600 mt-2 hover:text-blue-700 font-semibold inline-block"
-                                                        disabled={!selectedTaluk && !useManualTaluk}
-                                                    >
-                                                        {t.cantFind.replace('{item}', 'village')}
-                                                    </button>
-                                                </div>
-                                            )}
+                                            </div>
                                         </div>
-                                    )}
 
-                                    {/* Panchayat (for village roles) */}
-                                    {needsPanchayat && (
-                                        <div className="animate-fadeIn" style={{ animationDelay: '1.6s' }}>
+                                        {/* Panchayat */}
+                                        <div className="animate-fadeIn delay-1400">
                                             <label className="text-sm font-semibold text-green-900 mb-2">
                                                 {t.panchayat}
                                             </label>
-                                            {useManualPanchayat ? (
-                                                <div>
-                                                    <input
-                                                        value={newPanchayat}
-                                                        onChange={(e) => setNewPanchayat(e.target.value)}
-                                                        onKeyPress={handleKeyPress}
-                                                        className="input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base"
-                                                        placeholder={t.enterPanchayat}
-                                                        disabled={!selectedVillage && !useManualVillage}
-                                                    />
-                                                    <p className="text-xs text-green-900/60 mt-1">
-                                                        {t.newEntry.replace('{item}', 'panchayat')}
-                                                    </p>
+                                            <div className="relative">
+                                                <select
+                                                    value={panchayatId}
+                                                    onChange={(e) => setPanchayatId(e.target.value)}
+                                                    className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
+                                                    disabled={!villageId || loadingLoc || loading || panchayats.length === 0}
+                                                >
+                                                    <option value="">{t.selectPanchayat}</option>
+                                                    {panchayats.map((p) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.name} {p.code ? `(${p.code})` : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
+                                                    <svg className="fill-current h-5 w-5" viewBox="0 0 20 20">
+                                                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                                    </svg>
                                                 </div>
-                                            ) : (
-                                                <div>
-                                                    <div className="relative">
-                                                        <select
-                                                            value={selectedPanchayat}
-                                                            onChange={(e) => setSelectedPanchayat(e.target.value)}
-                                                            className="input-field w-full rounded-2xl px-4 py-3 pr-10 outline-none text-green-900 bg-white cursor-pointer appearance-none"
-                                                            disabled={!selectedVillage && !useManualVillage}
-                                                        >
-                                                            <option value="">{t.selectPanchayat}</option>
-                                                            {panchayats.map((p) => (
-                                                                <option key={p.id} value={p.id}>
-                                                                    {p.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-green-600">
-                                                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                                <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-2 space-y-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setUseManualPanchayat(true)}
-                                                            className="link-hover text-xs text-blue-600 hover:text-blue-700 font-semibold inline-block"
-                                                            disabled={!selectedVillage && !useManualVillage}
-                                                        >
-                                                            {t.cantFind.replace('{item}', 'panchayat')}
-                                                        </button>
-                                                        {panchayats.length === 0 && selectedVillage && (
-                                                            <p className="text-xs text-red-600 font-semibold">
-                                                                {t.noPanchayat}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                            </div>
+                                            {panchayats.length === 0 && villageId && !loadingLoc && (
+                                                <p className="text-xs text-red-600 mt-2 font-semibold">
+                                                    {t.noPanchayat}
+                                                </p>
                                             )}
                                         </div>
-                                    )}
-
-                                    {/* Gram Panchayat ID (for village roles) */}
-                                    {(role === "pdo" || role === "village_incharge") && (
-                                        <div className="animate-fadeIn" style={{ animationDelay: '1.7s' }}>
-                                            <label className="text-sm font-semibold text-green-900 mb-2">
-                                                {t.gramPanchayatId}
-                                            </label>
-                                            <input
-                                                value={gramPanchayatId}
-                                                onChange={(e) => setGramPanchayatId(e.target.value)}
-                                                onKeyPress={handleKeyPress}
-                                                className="input-field w-full rounded-2xl px-4 py-3 outline-none text-green-900 placeholder-green-400/50 text-base"
-                                                placeholder={t.enterGramPanchayatId}
-                                            />
-                                            <p className="text-xs text-green-900/60 mt-1">
-                                                {t.gramNote}
-                                            </p>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Submit Button */}
-                            <button
-                                onClick={handleSubmit}
-                                disabled={loading}
-                                className="button-base w-full mt-8 py-4 px-6 rounded-2xl font-semibold text-white text-base sm:text-lg
-                                  bg-gradient-to-r from-green-600 to-emerald-500
-                                  hover:from-green-700 hover:to-emerald-600
-                                  shadow-md hover:shadow-lg
-                                  focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2
-                                  disabled:opacity-60 disabled:cursor-not-allowed
-                                  flex items-center justify-center gap-2
-                                  animate-fadeIn"
-                                style={{ animationDelay: '1.8s' }}
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        <span>{t.creating}</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Shield className="w-5 h-5 animate-pulse-slow" />
-                                        <span>{t.register}</span>
-                                    </>
-                                )}
-                            </button>
-
-                            {/* Divider for mobile login option */}
-                            <div className="mt-6 sm:hidden">
-                                <div className="divider animate-fadeIn" style={{ animationDelay: '1.9s' }}>
-                                    <span>OR</span>
-                                </div>
+                                {/* Submit Button */}
                                 <button
-                                    onClick={() => router.push(`/${locale}/authority/login`)}
-                                    className="w-full py-3 px-4 rounded-2xl border-2 border-green-200 bg-white/50
-                                             text-green-700 font-semibold text-sm
-                                             flex items-center justify-center gap-2
-                                             hover:bg-green-50 hover:border-green-300
-                                             transition-all duration-300
-                                             animate-fadeIn"
-                                    style={{ animationDelay: '2s' }}
+                                    onClick={handleSubmit}
+                                    disabled={loading || !isPasswordValid() || !validateIndianMobile(mobile) || 
+                                             !validateAadhaar(aadhaar) || !validateEmail(email) || !emailValid ||
+                                             !districtId || !talukId || !villageId || !panchayatId || !name.trim()}
+                                    className="button-base w-full mt-8 py-4 px-6 rounded-2xl font-semibold text-white text-base sm:text-lg
+                                              bg-gradient-to-r from-green-600 to-emerald-500
+                                              hover:from-green-700 hover:to-emerald-600
+                                              shadow-md hover:shadow-lg
+                                              focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2
+                                              disabled:opacity-60 disabled:cursor-not-allowed
+                                              flex items-center justify-center gap-2
+                                              animate-fadeIn"
+                                    style={{ animationDelay: '1.5s' }}
                                 >
-                                    <LogIn className="w-4 h-4" />
-                                    <span>{t.loginHere}</span>
+                                    {loading ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>{t.creating}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FiShield className="w-5 h-5 animate-pulse-slow" />
+                                            <span>{t.register}</span>
+                                        </>
+                                    )}
                                 </button>
+
+                                {/* Mobile login option */}
+                                <div className="mt-6 sm:hidden">
+                                    <div className="divider animate-fadeIn" style={{ animationDelay: '1.6s' }}>
+                                        <span>OR</span>
+                                    </div>
+                                    <button
+                                        onClick={() => router.push(`/${locale}/villager/login`)}
+                                        className="w-full py-3 px-4 rounded-2xl border-2 border-green-200 bg-white/50
+                                                 text-green-700 font-semibold text-sm
+                                                 flex items-center justify-center gap-2
+                                                 hover:bg-green-50 hover:border-green-300
+                                                 transition-all duration-300
+                                                 animate-fadeIn"
+                                        style={{ animationDelay: '1.7s' }}
+                                    >
+                                        <LogIn className="w-4 h-4" />
+                                        <span>{t.loginHere}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Footer Note */}
-                    <div className="mt-8 text-center text-sm text-green-700/70 font-semibold animate-fadeIn" style={{ animationDelay: '2.1s' }}>
-                        <p className="flex items-center justify-center gap-2">
-                            <span className="animate-float">🏛️</span>
-                            <span>{t.joinAuthority}</span>
-                        </p>
-                    </div>
+                    )}
                 </div>
             </div>
         </Screen>
