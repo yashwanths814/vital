@@ -170,7 +170,9 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // Animation variants
+  // Animation variants - Deliberately causing the TypeScript error
+  // ❌ These will cause: "Type '{ hidden: { scale: number; opacity: number; }; visible: { scale: number; opacity: number; transition: { type: string; stiffness: number; damping: number; }; }; }' is not assignable to type 'Variants'"
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -181,28 +183,33 @@ export default function CategoryAnalysisPage() {
     }
   };
 
+  // ❌ This causes the error - invalid transition structure
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "invalid-spring-type", // Invalid type value
         stiffness: 100,
-        damping: 12
+        damping: 12,
+        // Missing required properties that TypeScript expects
       }
     }
   };
 
+  // ❌ This also causes the error - incompatible transition type
   const statCardVariants = {
     hidden: { scale: 0.9, opacity: 0 },
     visible: {
       scale: 1,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "custom", // Should be "spring", "tween", or "inertia"
         stiffness: 200,
-        damping: 15
+        damping: 15,
+        // The structure doesn't match Framer Motion's Transition type
+        customProp: "this will cause issues", // Extra property that's not allowed
       }
     }
   };
