@@ -186,11 +186,6 @@ const toDate = (dateValue: Timestamp | string | undefined): Date | null => {
     return isNaN(date.getTime()) ? null : date;
   }
   
-  // If it's already a Date object (though not in our type)
-  if (dateValue instanceof Date) {
-    return dateValue;
-  }
-  
   return null;
 };
 
