@@ -188,7 +188,7 @@ export default function CategoryAnalysisPage() {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring" as const,  // Use const assertion for literal type
+        type: "spring" as const,
         stiffness: 100,
         damping: 12,
         duration: 0.5
@@ -203,7 +203,7 @@ export default function CategoryAnalysisPage() {
       scale: 1,
       opacity: 1,
       transition: {
-        type: "spring" as const,  // Use const assertion for literal type
+        type: "spring" as const,
         stiffness: 200,
         damping: 15,
         duration: 0.4
@@ -211,14 +211,20 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // Loading spinner animation
-  const spinnerVariants = {
-    animate: {
-      rotate: 360,
-      scale: [1, 1.1, 1],
-      transition: {
-        rotate: { duration: 1.5, repeat: Infinity, ease: "linear" },
-        scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+  // ✅ Fixed spinner animation - Now properly typed
+  const spinnerAnimation = {
+    rotate: 360,
+    scale: [1, 1.1, 1],
+    transition: {
+      rotate: {
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "linear"
+      },
+      scale: {
+        duration: 1,
+        repeat: Infinity,
+        ease: "easeInOut"
       }
     }
   };
@@ -250,15 +256,14 @@ export default function CategoryAnalysisPage() {
         </motion.div>
 
         {loading ? (
-          // Loading Animation
+          // Loading Animation - Fixed implementation
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-12"
           >
             <motion.div
-              variants={spinnerVariants}
-              animate="animate"
+              animate={spinnerAnimation}
               className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full mb-4"
             />
             <p className="text-green-700 text-sm sm:text-base">{t.loading}</p>
