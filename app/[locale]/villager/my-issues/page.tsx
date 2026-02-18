@@ -168,6 +168,13 @@ export default function VillagerMyIssuesPage() {
                 back: "Back to Dashboard",
                 noIssuesFound: "No issues found",
                 tryDifferentFilter: "Try a different filter",
+                // Navigation translations
+                nav: {
+                    dashboard: "Dashboard",
+                    myIssues: "My Issues",
+                    tracking: "Tracking",
+                    profile: "Profile"
+                }
             },
             kn: {
                 title: "ನನ್ನ ಸಮಸ್ಯೆಗಳು",
@@ -212,6 +219,13 @@ export default function VillagerMyIssuesPage() {
                 back: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹಿಂದಿರುಗಿ",
                 noIssuesFound: "ಯಾವುದೇ ಸಮಸ್ಯೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
                 tryDifferentFilter: "ವಿಭಿನ್ನ ಫಿಲ್ಟರ್‌ನ ಪ್ರಯತ್ನಿಸಿ",
+                // Navigation translations
+                nav: {
+                    dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+                    myIssues: "ನನ್ನ ಸಮಸ್ಯೆಗಳು",
+                    tracking: "ಟ್ರ್ಯಾಕಿಂಗ್",
+                    profile: "ಪ್ರೊಫೈಲ್"
+                }
             },
             hi: {
                 title: "मेरे मुद्दे",
@@ -256,6 +270,13 @@ export default function VillagerMyIssuesPage() {
                 back: "डैशबोर्ड पर वापस जाएं",
                 noIssuesFound: "कोई मुद्दा नहीं मिला",
                 tryDifferentFilter: "एक अलग फ़िल्टर आज़माएं",
+                // Navigation translations
+                nav: {
+                    dashboard: "डैशबोर्ड",
+                    myIssues: "मेरे मुद्दे",
+                    tracking: "ट्रैकिंग",
+                    profile: "प्रोफ़ाइल"
+                }
             },
         };
         return L[locale] || L.en;
@@ -784,7 +805,7 @@ export default function VillagerMyIssuesPage() {
                     )}
                 </div>
 
-                {/* Bottom Navigation - Same as Dashboard and Profile */}
+                {/* Bottom Navigation - With Translations */}
                 <div className="fixed bottom-4 left-4 right-4 bg-white/90 backdrop-blur-lg border-2 border-green-100 rounded-2xl p-2 shadow-xl animate-fadeIn">
                     <div className="grid grid-cols-4 gap-1">
                         <button
@@ -793,7 +814,7 @@ export default function VillagerMyIssuesPage() {
                         >
                             <FiHome className="w-5 h-5 text-green-600/70" />
                             <span className="text-xs mt-1 font-medium text-green-700/70">
-                                Dashboard
+                                {t.nav.dashboard}
                             </span>
                         </button>
                         
@@ -802,7 +823,7 @@ export default function VillagerMyIssuesPage() {
                         >
                             <FiList className="w-5 h-5 text-green-700" />
                             <span className="text-xs mt-1 font-medium text-green-800 font-bold">
-                                My Issues
+                                {t.nav.myIssues}
                             </span>
                         </button>
                         
@@ -812,7 +833,7 @@ export default function VillagerMyIssuesPage() {
                         >
                             <FiTrendingUp className="w-5 h-5 text-green-600/70" />
                             <span className="text-xs mt-1 font-medium text-green-700/70">
-                                Tracking
+                                {t.nav.tracking}
                             </span>
                         </button>
                         
@@ -822,7 +843,7 @@ export default function VillagerMyIssuesPage() {
                         >
                             <FiUser className="w-5 h-5 text-green-600/70" />
                             <span className="text-xs mt-1 font-medium text-green-700/70">
-                                Profile
+                                {t.nav.profile}
                             </span>
                         </button>
                     </div>
