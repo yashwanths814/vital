@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { auth, db } from "../../../../../lib/firebase";
+import { auth, db } from "../../../../lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import Screen from "../../../../../components/Screen";
+import Screen from "../../../../components/Screen";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Translations
