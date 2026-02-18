@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Screen from "../../../../../components/Screen";
+import Screen from "../../../../components/Screen";
 import {
     FiArrowLeft,
     FiHelpCircle,
