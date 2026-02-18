@@ -209,23 +209,17 @@ export default function CategoryAnalysisPage() {
     }
   };
 
-  // ✅ Fixed: Split spinner animations into separate objects
-  const rotateAnimation = {
-    rotate: 360,
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: "linear"
-    }
+  // ✅ Fixed: Use proper easing types
+  const spinnerTransition = {
+    duration: 1.5,
+    repeat: Infinity,
+    ease: "linear" as const
   };
 
-  const scaleAnimation = {
-    scale: [1, 1.1, 1],
-    transition: {
-      duration: 1,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
+  const textTransition = {
+    duration: 1,
+    repeat: Infinity,
+    ease: "easeInOut" as const
   };
 
   return (
@@ -255,19 +249,20 @@ export default function CategoryAnalysisPage() {
         </motion.div>
 
         {loading ? (
-          // Loading Animation - Fixed with separate animations
+          // Loading Animation - Fixed with proper easing types
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-12"
           >
             <motion.div
-              animate={rotateAnimation}
+              animate={{ rotate: 360 }}
+              transition={spinnerTransition}
               className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full mb-4"
             />
             <motion.div
-              animate={scaleAnimation}
-              className="flex justify-center"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={textTransition}
             >
               <p className="text-green-700 text-sm sm:text-base">{t.loading}</p>
             </motion.div>
