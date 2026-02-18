@@ -1,4 +1,3 @@
-// app/[locale]/authority/pdo/workers/add/page.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -20,7 +19,8 @@ import {
     FiCheckCircle,
     FiXCircle,
     FiPlus,
-    FiTrash2
+    FiTrash2,
+    FiUsers  // Added missing import
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 
