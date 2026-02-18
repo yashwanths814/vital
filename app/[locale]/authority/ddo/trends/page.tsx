@@ -1,12 +1,54 @@
-// app/[locale]/authority/ddo/trends/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { auth, db } from "../../../../lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, Timestamp } from "firebase/firestore";
 import Screen from "../../../../components/Screen";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Define proper types
+interface Issue {
+  id: string;
+  title?: string;
+  category?: string;
+  categoryName?: string;
+  type?: string;
+  status?: string;
+  panchayatName?: string;
+  panchayat?: string;
+  gramPanchayat?: string;
+  createdAt?: Timestamp | string | Date;
+  resolvedAt?: Timestamp | string | Date;
+  updatedAt?: Timestamp | string | Date;
+  closedAt?: Timestamp | string | Date;
+  escalated?: boolean;
+  district?: string;
+  districtId?: string;
+  [key: string]: any;
+}
+
+interface MonthlyTrend {
+  month: string;
+  monthKey: string;
+  total: number;
+  resolved: number;
+  escalated: number;
+  pending: number;
+  resolutionRate: number;
+  escalationRate: number;
+  issues: Issue[];
+}
+
+interface GPTrend {
+  name: string;
+  months: Record<string, number>;
+  total: number;
+  resolved: number;
+  escalated: number;
+  resolutionRate: number;
+  escalationRate: number;
+}
 
 // Translations
 const translations = {
@@ -69,6 +111,26 @@ const translations = {
   }
 };
 
+// Helper function to safely convert any date type to Date object
+const toDate = (dateValue: Timestamp | string | Date | undefined): Date | null => {
+  if (!dateValue) return null;
+  
+  if (dateValue instanceof Timestamp) {
+    return dateValue.toDate();
+  }
+  
+  if (typeof dateValue === 'string') {
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  
+  if (dateValue instanceof Date) {
+    return dateValue;
+  }
+  
+  return null;
+};
+
 export default function TrendsPage() {
   const router = useRouter();
   const params = useParams() as { locale?: string };
@@ -76,8 +138,8 @@ export default function TrendsPage() {
   const t = translations[locale as keyof typeof translations] || translations.en;
   
   const [loading, setLoading] = useState(true);
-  const [monthlyTrends, setMonthlyTrends] = useState<any[]>([]);
-  const [gpTrends, setGpTrends] = useState<any[]>([]);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
+  const [gpTrends, setGpTrends] = useState<GPTrend[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("12");
   const [selectedGP, setSelectedGP] = useState<string | null>(null);
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
@@ -115,19 +177,21 @@ export default function TrendsPage() {
       );
       const issuesSnap = await getDocs(issuesQuery);
 
-      const issues = issuesSnap.docs.map(doc => ({
+      const issues: Issue[] = issuesSnap.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Issue[];
 
       // Monthly trends based on selected timeframe
-      const monthlyData: Record<string, any> = {};
-      const gpData: Record<string, any> = {};
+      const monthlyData: Record<string, MonthlyTrend> = {};
+      const gpData: Record<string, GPTrend> = {};
       const today = new Date();
       const monthsLimit = parseInt(selectedTimeframe);
 
       issues.forEach(issue => {
-        const date = issue.createdAt?.toDate?.() || new Date(issue.createdAt);
+        const date = toDate(issue.createdAt);
+        if (!date) return;
+
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthName = date.toLocaleString(locale, { month: 'short', year: '2-digit' });
 
@@ -144,6 +208,8 @@ export default function TrendsPage() {
             resolved: 0,
             escalated: 0,
             pending: 0,
+            resolutionRate: 0,
+            escalationRate: 0,
             issues: []
           };
         }
@@ -151,28 +217,30 @@ export default function TrendsPage() {
         monthlyData[monthKey].total++;
         monthlyData[monthKey].issues.push(issue);
         
-        if (issue.status === "resolved") {
+        if (issue.status === "resolved" || issue.status === "closed") {
           monthlyData[monthKey].resolved++;
-        } else if (["pending", "in_progress"].includes(issue.status)) {
+        } else if (["pending", "in_progress", "assigned", "verified", "submitted"].includes(issue.status || "")) {
           monthlyData[monthKey].pending++;
         }
         
-        if (issue.escalated) monthlyData[monthKey].escalated++;
+        if (issue.escalated === true) monthlyData[monthKey].escalated++;
 
         // GP trends
-        const gp = issue.panchayatName || "Unknown";
+        const gp = issue.panchayatName || issue.panchayat || issue.gramPanchayat || "Unknown";
         if (!gpData[gp]) {
           gpData[gp] = {
             name: gp,
             months: {},
             total: 0,
             resolved: 0,
-            escalated: 0
+            escalated: 0,
+            resolutionRate: 0,
+            escalationRate: 0
           };
         }
         gpData[gp].total++;
-        if (issue.status === "resolved") gpData[gp].resolved++;
-        if (issue.escalated) gpData[gp].escalated++;
+        if (issue.status === "resolved" || issue.status === "closed") gpData[gp].resolved++;
+        if (issue.escalated === true) gpData[gp].escalated++;
         
         if (!gpData[gp].months[monthKey]) {
           gpData[gp].months[monthKey] = 0;
@@ -182,7 +250,7 @@ export default function TrendsPage() {
 
       // Sort monthly data (latest first)
       const sortedMonths = Object.keys(monthlyData).sort().reverse();
-      const trends = sortedMonths.map(key => ({
+      const trends: MonthlyTrend[] = sortedMonths.map(key => ({
         ...monthlyData[key],
         resolutionRate: monthlyData[key].total > 0 
           ? Math.round((monthlyData[key].resolved / monthlyData[key].total) * 100) 
@@ -193,10 +261,10 @@ export default function TrendsPage() {
       }));
 
       // Sort GP data by total issues
-      const topGPs = Object.values(gpData)
-        .sort((a: any, b: any) => b.total - a.total)
+      const topGPs: GPTrend[] = Object.values(gpData)
+        .sort((a, b) => b.total - a.total)
         .slice(0, 10)
-        .map((gp: any) => ({
+        .map(gp => ({
           ...gp,
           resolutionRate: gp.total > 0 ? Math.round((gp.resolved / gp.total) * 100) : 0,
           escalationRate: gp.total > 0 ? Math.round((gp.escalated / gp.total) * 100) : 0
@@ -430,18 +498,18 @@ export default function TrendsPage() {
                                   Top Issues
                                 </h4>
                                 <div className="space-y-2">
-                                  {trend.issues.slice(0, 3).map((issue: any) => (
+                                  {trend.issues.slice(0, 3).map((issue: Issue) => (
                                     <div key={issue.id} className="text-xs sm:text-sm">
                                       <div className="flex justify-between">
                                         <span className="truncate max-w-[150px] sm:max-w-xs">
-                                          {issue.title}
+                                          {issue.title || issue.id}
                                         </span>
                                         <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                          issue.status === 'resolved' 
+                                          issue.status === 'resolved' || issue.status === 'closed'
                                             ? 'bg-green-100 text-green-700'
                                             : 'bg-yellow-100 text-yellow-700'
                                         }`}>
-                                          {issue.status}
+                                          {issue.status || 'unknown'}
                                         </span>
                                       </div>
                                     </div>
@@ -477,7 +545,7 @@ export default function TrendsPage() {
               <AnimatePresence>
                 {gpTrends.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                    {gpTrends.map((gp: any, index) => (
+                    {gpTrends.map((gp, index) => (
                       <motion.div
                         key={gp.name}
                         variants={cardVariants}
@@ -540,7 +608,7 @@ export default function TrendsPage() {
                                     .sort()
                                     .reverse()
                                     .slice(0, 6)
-                                    .map(([month, count]: [string, any]) => (
+                                    .map(([month, count]) => (
                                       <div key={month} className="flex justify-between text-xs">
                                         <span>{month}</span>
                                         <span className="font-medium">{count} issues</span>
