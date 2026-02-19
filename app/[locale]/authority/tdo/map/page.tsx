@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Screen from "../../../../components/Screen";
-import { auth, db } from "../../../../lib/firebase";
+import Screen from "../../../components/Screen";
+import { auth, db } from "../../../lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import {
     FiArrowLeft,
