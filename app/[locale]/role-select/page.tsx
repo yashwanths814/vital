@@ -6,6 +6,9 @@ import { FaUserShield, FaUserTie, FaUsers } from "react-icons/fa";
 import { FiGlobe, FiDownload, FiX } from "react-icons/fi";
 import { useState, useEffect, useRef } from "react";
 
+/** ---------------------------
+ *  Tile Component (same as yours)
+ *  -------------------------- */
 function Tile({
   icon,
   title,
@@ -39,6 +42,7 @@ function Tile({
 
     setTimeout(() => {
       onClick();
+      // reset for safety (if user comes back)
       lock.current = false;
       setIsClicked(false);
       setRipple(null);
@@ -66,6 +70,7 @@ function Tile({
         `}
         style={{ transform: isHovered ? "translateY(-2px)" : "translateY(0)" }}
       >
+        {/* Ripple */}
         {ripple && (
           <div
             className="absolute w-8 h-8 bg-green-200 rounded-full opacity-60 animate-ripple pointer-events-none"
@@ -73,10 +78,12 @@ function Tile({
           />
         )}
 
+        {/* Glow */}
         {isHovered && (
           <div className="absolute inset-0 bg-gradient-to-br from-green-50/55 to-transparent pointer-events-none" />
         )}
 
+        {/* Icon */}
         <div
           className={`
             h-11 w-11 rounded-xl
@@ -89,6 +96,7 @@ function Tile({
           <div className={isHovered ? "animate-pulse-slow" : ""}>{icon}</div>
         </div>
 
+        {/* Text */}
         <div className="flex-1 relative z-10">
           <div
             className={`
@@ -115,6 +123,7 @@ function Tile({
           </div>
         </div>
 
+        {/* Arrow */}
         <div
           className={`
             transition-all duration-300 relative z-10
@@ -142,25 +151,29 @@ function Tile({
   );
 }
 
-/** ✅ Download App Popup */
-function DownloadPopup({
+/** ---------------------------
+ *  PWA Install Popup (Modal)
+ *  -------------------------- */
+function InstallPwaPopup({
   open,
   onClose,
   title,
   body,
-  apkLabel,
-  apkUrl,
-  ghLabel,
-  ghUrl,
+  installLabel,
+  notNowLabel,
+  onInstall,
+  canInstall,
+  iosHint,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   body: string;
-  apkLabel: string;
-  apkUrl: string;
-  ghLabel: string;
-  ghUrl: string;
+  installLabel: string;
+  notNowLabel: string;
+  onInstall: () => void;
+  canInstall: boolean;
+  iosHint: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -184,7 +197,7 @@ function DownloadPopup({
       {/* Modal */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-md rounded-2xl bg-white border border-green-100 shadow-xl animate-pop-in relative overflow-hidden">
-          {/* Soft header glow */}
+          {/* Soft glows */}
           <div className="absolute -top-20 -right-20 w-48 h-48 bg-green-200/30 rounded-full blur-2xl" />
           <div className="absolute -bottom-24 -left-20 w-56 h-56 bg-green-100/40 rounded-full blur-2xl" />
 
@@ -212,30 +225,32 @@ function DownloadPopup({
             </div>
 
             <div className="mt-5 grid gap-3">
-              <a
-                href={apkUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition"
+              <button
+                onClick={onInstall}
+                disabled={!canInstall}
+                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition
+                  ${
+                    canInstall
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  }`}
               >
                 <FiDownload />
-                {apkLabel}
-              </a>
+                {installLabel}
+              </button>
 
-              <a
-                href={ghUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white text-green-800 font-bold text-sm border border-green-200 hover:bg-green-50 transition"
+              <button
+                onClick={onClose}
+                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-white text-green-800 font-bold text-sm border border-green-200 hover:bg-green-50 transition"
               >
-                {ghLabel}
-              </a>
+                {notNowLabel}
+              </button>
 
-              <div className="text-[11px] text-gray-500 text-center">
-                Tip: If APK install is blocked, enable{" "}
-                <span className="font-semibold">“Install unknown apps”</span>{" "}
-                for your browser/file manager.
-              </div>
+              {!canInstall && (
+                <div className="text-[11px] text-gray-500 text-center leading-relaxed">
+                  {iosHint}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -244,6 +259,9 @@ function DownloadPopup({
   );
 }
 
+/** ---------------------------
+ *  RoleSelectPage + PWA Install
+ *  -------------------------- */
 export default function RoleSelectPage() {
   const router = useRouter();
   const params = useParams() as { locale?: string };
@@ -252,10 +270,44 @@ export default function RoleSelectPage() {
   const [hoveredTile, setHoveredTile] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // ✅ Popup state
-  const [openDownload, setOpenDownload] = useState(false);
+  // ✅ PWA install states
+  const [openInstall, setOpenInstall] = useState(false);
+  const deferredPrompt = useRef<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => setIsLoaded(true), []);
+
+  // ✅ Capture PWA install prompt (Chrome/Edge Android/Desktop)
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+      setCanInstall(true);
+    };
+
+    const onInstalled = () => {
+      deferredPrompt.current = null;
+      setCanInstall(false);
+      setOpenInstall(false);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", onInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt.current) return;
+    deferredPrompt.current.prompt();
+    await deferredPrompt.current.userChoice;
+    deferredPrompt.current = null;
+    setCanInstall(false);
+    setOpenInstall(false);
+  };
 
   const T: Record<string, any> = {
     en: {
@@ -271,12 +323,13 @@ export default function RoleSelectPage() {
       hintClick: (role: string) => `Click to continue as ${role}`,
       changeLang: "Change language",
 
-      // ✅ Popup translations
-      downloadBtn: "Download app",
-      downloadTitle: "Download VITAL App",
-      downloadBody: "Get the latest Android build (APK) and install on your phone.",
-      apkLabel: "Download APK",
-      ghLabel: "View GitHub Releases",
+      // ✅ PWA strings
+      installBtn: "Install app",
+      installTitle: "Install VITAL",
+      installBody: "Add VITAL to your home screen for faster access like a real app.",
+      notNow: "Not now",
+      iosHint:
+        "Install is available on Chrome/Edge when PWA is ready. On iPhone: Share → Add to Home Screen.",
     },
     kn: {
       title: "ನಿಮ್ಮ ಪಾತ್ರ ಆಯ್ಕೆಮಾಡಿ",
@@ -291,11 +344,13 @@ export default function RoleSelectPage() {
       hintClick: (role: string) => `${role} ಆಗಿ ಮುಂದುವರೆಯಲು ಕ್ಲಿಕ್ ಮಾಡಿ`,
       changeLang: "ಭಾಷೆ ಬದಲಾಯಿಸಿ",
 
-      downloadBtn: "ಆಪ್ ಡೌನ್‌ಲೋಡ್",
-      downloadTitle: "VITAL ಆಪ್ ಡೌನ್‌ಲೋಡ್",
-      downloadBody: "ಇತ್ತೀಚಿನ Android APK ಅನ್ನು ಪಡೆದು ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
-      apkLabel: "APK ಡೌನ್‌ಲೋಡ್",
-      ghLabel: "GitHub Releases ನೋಡಿ",
+      installBtn: "ಆಪ್ ಇನ್‌ಸ್ಟಾಲ್",
+      installTitle: "VITAL ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
+      installBody:
+        "VITAL ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ — ಆಪ್‌ನಂತೆ ಬೇಗ ಓಪನ್ ಮಾಡಬಹುದು.",
+      notNow: "ಇಲ್ಲ, ನಂತರ",
+      iosHint:
+        "Chrome/Edge ನಲ್ಲಿ ಮಾತ್ರ Install ಬರಬಹುದು. iPhone ನಲ್ಲಿ: Share → Add to Home Screen.",
     },
     hi: {
       title: "अपनी भूमिका चुनें",
@@ -310,11 +365,13 @@ export default function RoleSelectPage() {
       hintClick: (role: string) => `${role} के रूप में जारी रखने के लिए क्लिक करें`,
       changeLang: "भाषा बदलें",
 
-      downloadBtn: "ऐप डाउनलोड",
-      downloadTitle: "VITAL ऐप डाउनलोड करें",
-      downloadBody: "लेटेस्ट Android APK डाउनलोड करके अपने फोन में इंस्टॉल करें।",
-      apkLabel: "APK डाउनलोड",
-      ghLabel: "GitHub Releases देखें",
+      installBtn: "ऐप इंस्टॉल",
+      installTitle: "VITAL इंस्टॉल करें",
+      installBody:
+        "VITAL को होम स्क्रीन पर जोड़ें ताकि यह एक रियल ऐप की तरह जल्दी खुले।",
+      notNow: "अभी नहीं",
+      iosHint:
+        "Install Chrome/Edge पर आएगा. iPhone पर: Share → Add to Home Screen.",
     },
   };
 
@@ -325,12 +382,6 @@ export default function RoleSelectPage() {
     if (idx === 1) return t.authority;
     return t.villager;
   };
-
-  // ✅ Put your real links here
-  const APK_URL =
-    "https://your-domain.com/VITAL-latest.apk"; // or a GitHub release asset direct link
-  const GITHUB_RELEASES_URL =
-    "https://github.com/<your-username>/<your-repo>/releases";
 
   return (
     <>
@@ -428,11 +479,11 @@ export default function RoleSelectPage() {
           {/* Top buttons */}
           <div className="relative z-10 flex justify-center gap-2 flex-wrap">
             <button
-              onClick={() => setOpenDownload(true)}
+              onClick={() => setOpenInstall(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 text-white border border-green-600 font-semibold text-xs sm:text-sm hover:bg-green-700 transition"
             >
               <FiDownload />
-              {t.downloadBtn}
+              {t.installBtn}
             </button>
 
             <button
@@ -528,16 +579,17 @@ export default function RoleSelectPage() {
           </div>
         </div>
 
-        {/* ✅ Download popup mounted here */}
-        <DownloadPopup
-          open={openDownload}
-          onClose={() => setOpenDownload(false)}
-          title={t.downloadTitle}
-          body={t.downloadBody}
-          apkLabel={t.apkLabel}
-          apkUrl={APK_URL}
-          ghLabel={t.ghLabel}
-          ghUrl={GITHUB_RELEASES_URL}
+        {/* ✅ PWA Install Popup */}
+        <InstallPwaPopup
+          open={openInstall}
+          onClose={() => setOpenInstall(false)}
+          title={t.installTitle}
+          body={t.installBody}
+          installLabel={t.installBtn}
+          notNowLabel={t.notNow}
+          onInstall={handleInstall}
+          canInstall={canInstall}
+          iosHint={t.iosHint}
         />
       </Screen>
     </>
